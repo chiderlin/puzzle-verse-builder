@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
 import { AuthForm } from "@/components/AuthForm";
 import { PuzzleControls } from "@/components/PuzzleControls";
+import { Leaderboard } from "@/components/Leaderboard";
 import { usePuzzleState } from "@/hooks/usePuzzleState";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -210,26 +212,47 @@ const Index = () => {
       </div>;
   }
 
-  return <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+  return (
+    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[90rem] mx-auto">
         <div className="text-center mb-4">
           <p className="font-semibold text-4xl text-lime-600">Total Career Score: {totalScore} points</p>
         </div>
-        <PuzzleControls onSignOut={() => supabase.auth.signOut()} onGenerateNew={generateNewPuzzle} onSaveProgress={saveProgress} onRevealAnswer={handleRevealAnswer} onHideAnswer={handleHideAnswer} onSubmit={handleSubmit} isGenerating={isGenerating} isSaving={isSaving} isSubmitted={isSubmitted} />
+        <PuzzleControls 
+          onSignOut={() => supabase.auth.signOut()} 
+          onGenerateNew={generateNewPuzzle} 
+          onSaveProgress={saveProgress} 
+          onRevealAnswer={handleRevealAnswer} 
+          onHideAnswer={handleHideAnswer} 
+          onSubmit={handleSubmit} 
+          isGenerating={isGenerating} 
+          isSaving={isSaving} 
+          isSubmitted={isSubmitted} 
+        />
 
-        {isGenerating ? <div className="grid place-items-center h-[600px]">
+        {isGenerating ? (
+          <div className="grid place-items-center h-[600px]">
             <div className="text-center space-y-4">
               <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
               <p className="text-slate-600 animate-pulse">Generating new puzzle...</p>
             </div>
-          </div> : <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8">
               <div className="bg-white p-6 rounded-xl shadow-sm">
-                <CrosswordGrid grid={grid} onCellClick={handleCellClick} onCellChange={handleCellChange} onHintRequest={handleHintRequest} />
+                <CrosswordGrid 
+                  grid={grid} 
+                  onCellClick={handleCellClick} 
+                  onCellChange={handleCellChange} 
+                  onHintRequest={handleHintRequest} 
+                />
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="lg:col-span-4 space-y-6">
+              <Leaderboard />
+              
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <ClueList title="Across" clues={puzzle.across} onClueClick={() => {}} />
               </div>
@@ -238,9 +261,11 @@ const Index = () => {
                 <ClueList title="Down" clues={puzzle.down} onClueClick={() => {}} />
               </div>
             </div>
-          </div>}
+          </div>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Index;
