@@ -18,7 +18,8 @@ export const Leaderboard = () => {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, total_score, display_name')
-          .order('total_score', { ascending: false });
+          .order('total_score', { ascending: false })
+          .limit(10);
 
         if (profilesError) throw profilesError;
 
@@ -60,7 +61,7 @@ export const Leaderboard = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-slate-900 mb-4">All Players</h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-4">Top 10 Gamer</h2>
       {loading ? (
         <div className="animate-pulse space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -68,7 +69,7 @@ export const Leaderboard = () => {
           ))}
         </div>
       ) : (
-        <div className="max-h-[600px] overflow-y-auto space-y-3">
+        <div className="space-y-3">
           {leaderboard.map((entry, index) => (
             <div
               key={entry.id}
