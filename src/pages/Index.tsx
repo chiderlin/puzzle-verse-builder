@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -12,6 +11,7 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
   const {
     puzzle,
@@ -108,6 +108,60 @@ const Index = () => {
     setGrid(newGrid);
   };
 
+  const handleSubmit = async () => {
+    let score = 0;
+    
+    grid.forEach(row => {
+      row.forEach(cell => {
+        if (cell.letter && cell.letter === cell.userCurrentValue) {
+          score += 5;
+        }
+      });
+    });
+
+    try {
+      const { data: existingProgress } = await supabase
+        .from('puzzle_progress')
+        .select('id')
+        .limit(1)
+        .single();
+
+      if (existingProgress) {
+        await supabase
+          .from('puzzle_progress')
+          .update({
+            grid_state: grid,
+            score: score,
+            submitted: true,
+            last_updated: new Date().toISOString(),
+          })
+          .eq('id', existingProgress.id);
+      } else {
+        await supabase
+          .from('puzzle_progress')
+          .insert({
+            grid_state: grid,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            score: score,
+            submitted: true,
+          });
+      }
+
+      setIsSubmitted(true);
+      toast({
+        title: "Puzzle Submitted!",
+        description: `Your score: ${score} points`,
+      });
+    } catch (error) {
+      console.error('Error submitting puzzle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit puzzle",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -143,8 +197,10 @@ const Index = () => {
           onSaveProgress={saveProgress}
           onRevealAnswer={handleRevealAnswer}
           onHideAnswer={handleHideAnswer}
+          onSubmit={handleSubmit}
           isGenerating={isGenerating}
           isSaving={isSaving}
+          isSubmitted={isSubmitted}
         />
 
         {isGenerating ? (

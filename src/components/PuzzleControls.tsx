@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { SaveIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import { SaveIcon, EyeIcon, EyeOffIcon, CheckCircleIcon } from "lucide-react";
 import { useState } from "react";
 
 interface PuzzleControlsProps {
@@ -9,8 +9,10 @@ interface PuzzleControlsProps {
   onSaveProgress: () => void;
   onRevealAnswer: () => void;
   onHideAnswer: () => void;
+  onSubmit: () => void;
   isGenerating: boolean;
   isSaving: boolean;
+  isSubmitted: boolean;
 }
 
 export const PuzzleControls = ({
@@ -19,8 +21,10 @@ export const PuzzleControls = ({
   onSaveProgress,
   onRevealAnswer,
   onHideAnswer,
+  onSubmit,
   isGenerating,
-  isSaving
+  isSaving,
+  isSubmitted
 }: PuzzleControlsProps) => {
   const [showingAnswers, setShowingAnswers] = useState(false);
 
@@ -81,6 +85,15 @@ export const PuzzleControls = ({
               Show Answer
             </>
           )}
+        </Button>
+        <Button
+          onClick={onSubmit}
+          disabled={isSubmitted}
+          variant="default"
+          className="flex items-center gap-2"
+        >
+          <CheckCircleIcon className="h-4 w-4" />
+          {isSubmitted ? "Submitted" : "Submit Answers"}
         </Button>
       </div>
     </div>

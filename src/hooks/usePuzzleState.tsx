@@ -79,7 +79,7 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
     try {
       const { data: progress, error } = await supabase
         .from('puzzle_progress')
-        .select('grid_state')
+        .select('grid_state, submitted')
         .order('last_updated', { ascending: false })
         .limit(1)
         .single();
@@ -92,10 +92,8 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
       }
 
       if (progress?.grid_state) {
-        // Cast the grid_state to unknown first, then to GridCell[][]
         const loadedGrid = progress.grid_state as unknown as GridCell[][];
         if (Array.isArray(loadedGrid) && loadedGrid.length > 0) {
-          // Ensure each cell has userCurrentValue, even if it's empty
           const processedGrid = loadedGrid.map(row =>
             row.map(cell => ({
               ...cell,
@@ -103,10 +101,18 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
             }))
           );
           setGrid(processedGrid);
-          toast({
-            title: "Progress Loaded",
-            description: "Your previous game progress has been restored.",
-          });
+          
+          if (progress.submitted) {
+            toast({
+              title: "Puzzle Already Submitted",
+              description: "This puzzle has already been completed and submitted.",
+            });
+          } else {
+            toast({
+              title: "Progress Loaded",
+              description: "Your previous game progress has been restored.",
+            });
+          }
         }
       }
     } catch (error) {
