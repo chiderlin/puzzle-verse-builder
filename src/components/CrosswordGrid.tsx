@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 interface CrosswordCell {
   letter: string;
@@ -151,7 +151,7 @@ export const CrosswordGrid = ({
                       onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
                       data-row={rowIndex}
                       data-col={colIndex}
-                      readOnly={cell.isPartialHint}
+                      readOnly={cell.isRevealed || cell.isPartialHint}
                     />
                     {!cell.isRevealed && !cell.isPartialHint && cell.letter && (
                       <button
