@@ -3,7 +3,7 @@ interface Clue {
   number: number;
   text: string;
   isActive?: boolean;
-  length?: number; // Add length property
+  length?: number;
 }
 
 interface ClueListProps {
@@ -12,12 +12,12 @@ interface ClueListProps {
   onClueClick: (number: number) => void;
 }
 
-export const ClueList = ({ title, clues, onClueClick }: ClueListProps) => {
+export const ClueList = ({ title, clues = [], onClueClick }: ClueListProps) => {
   return (
     <div>
       <h2 className="text-lg font-semibold mb-3">{title}</h2>
       <ul className="space-y-2">
-        {clues.map((clue) => (
+        {(clues || []).map((clue) => (
           <li 
             key={clue.number}
             className={`
