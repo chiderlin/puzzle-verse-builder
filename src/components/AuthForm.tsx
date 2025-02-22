@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -29,7 +30,33 @@ export const AuthForm = ({ mode, onSubmit, onToggle }: AuthFormProps) => {
     }
     setIsLoading(true);
     try {
-      await onSubmit(email, password);
+      // If registering, extract username from email and update profiles table
+      if (mode === "register") {
+        // First, try to sign up the user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+
+        if (authData.user) {
+          const username = email.split('@')[0]; // Extract username from email
+          // Update the profiles table with email and display_name
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              email: email,
+              display_name: username
+            })
+            .eq('id', authData.user.id);
+
+          if (updateError) throw updateError;
+        }
+      } else {
+        // If logging in, just use the regular onSubmit
+        await onSubmit(email, password);
+      }
     } catch (error) {
       console.error("Auth error:", error);
       toast({
