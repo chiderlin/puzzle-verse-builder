@@ -6,6 +6,7 @@ import { AuthForm } from "@/components/AuthForm";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 import { SaveIcon } from "lucide-react";
 
 const defaultPuzzle = {
