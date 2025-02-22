@@ -7,7 +7,7 @@ interface CrosswordCell {
   isActive: boolean;
   isHighlighted: boolean;
   isRevealed?: boolean;
-  isPartialHint?: boolean; // New property to mark cells that are shown as hints
+  isPartialHint?: boolean;
 }
 
 interface CrosswordGridProps {
@@ -28,18 +28,72 @@ export const CrosswordGrid = ({
   const handleCellInput = (row: number, col: number, value: string) => {
     if (value.length <= 1 && /^[A-Za-z]$/.test(value) || value === "") {
       onCellChange(row, col, value.toUpperCase());
+      
+      // Auto-advance to next cell if a letter was entered
+      if (value) {
+        const nextInput = gridRef.current?.querySelector(
+          `input[data-row="${row}"][data-col="${col + 1}"]`
+        ) as HTMLInputElement;
+        if (nextInput && !nextInput.readOnly) {
+          nextInput.focus();
+        }
+      }
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, row: number, col: number) => {
-    if (e.key === "Backspace" && (e.target as HTMLInputElement).value === "") {
-      e.preventDefault();
-      onCellChange(row, col, "");
-      // Move to previous cell
-      const prevInput = gridRef.current?.querySelector(
-        `input[data-row="${row}"][data-col="${col - 1}"]`
-      ) as HTMLInputElement;
-      prevInput?.focus();
+    const currentInput = e.target as HTMLInputElement;
+
+    switch (e.key) {
+      case "Backspace":
+        if (currentInput.value === "") {
+          e.preventDefault();
+          onCellChange(row, col, "");
+          // Move to previous cell
+          const prevInput = gridRef.current?.querySelector(
+            `input[data-row="${row}"][data-col="${col - 1}"]`
+          ) as HTMLInputElement;
+          if (prevInput && !prevInput.readOnly) {
+            prevInput.focus();
+          }
+        }
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        const leftInput = gridRef.current?.querySelector(
+          `input[data-row="${row}"][data-col="${col - 1}"]`
+        ) as HTMLInputElement;
+        if (leftInput && !leftInput.readOnly) {
+          leftInput.focus();
+        }
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        const rightInput = gridRef.current?.querySelector(
+          `input[data-row="${row}"][data-col="${col + 1}"]`
+        ) as HTMLInputElement;
+        if (rightInput && !rightInput.readOnly) {
+          rightInput.focus();
+        }
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        const upInput = gridRef.current?.querySelector(
+          `input[data-row="${row - 1}"][data-col="${col}"]`
+        ) as HTMLInputElement;
+        if (upInput && !upInput.readOnly) {
+          upInput.focus();
+        }
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        const downInput = gridRef.current?.querySelector(
+          `input[data-row="${row + 1}"][data-col="${col}"]`
+        ) as HTMLInputElement;
+        if (downInput && !downInput.readOnly) {
+          downInput.focus();
+        }
+        break;
     }
   };
 
