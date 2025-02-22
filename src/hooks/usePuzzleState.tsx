@@ -76,11 +76,15 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
 
   const loadSavedProgress = async () => {
     try {
+      // Find the most recent unsubmitted puzzle for the current user
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.id) throw new Error('User not found');
+
       const { data: progress, error } = await supabase
         .from('puzzle_progress')
         .select('*')
-        .order('last_updated', { ascending: false })
-        .limit(1)
+        .eq('user_id', user.user.id)
+        .eq('submitted', false)
         .maybeSingle();
 
       if (error) throw error;
@@ -95,19 +99,14 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
             }))
           );
           setGrid(processedGrid);
-          
-          if (progress.submitted) {
-            toast({
-              title: "Puzzle Already Submitted",
-              description: "This puzzle has already been completed and submitted.",
-            });
-          } else {
-            toast({
-              title: "Progress Loaded",
-              description: "Your previous game progress has been restored.",
-            });
-          }
+          toast({
+            title: "Progress Loaded",
+            description: "Your previous game progress has been restored.",
+          });
         }
+      } else {
+        // No unsubmitted puzzle found, generate a new one
+        await generateNewPuzzle();
       }
     } catch (error) {
       console.error('Error loading progress:', error);
@@ -144,22 +143,26 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
 
       if (existingProgress) {
         // Update existing puzzle progress
-        await supabase
+        const { error: updateError } = await supabase
           .from('puzzle_progress')
           .update({
             grid_state: grid as unknown as Json,
             last_updated: new Date().toISOString(),
           })
           .eq('id', existingProgress.id);
+
+        if (updateError) throw updateError;
       } else {
         // Create new puzzle progress
-        await supabase
+        const { error: insertError } = await supabase
           .from('puzzle_progress')
           .insert({
             grid_state: grid as unknown as Json,
             user_id: user.user.id,
             submitted: false
           });
+
+        if (insertError) throw insertError;
       }
 
       toast({
@@ -181,6 +184,19 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
   const generateNewPuzzle = async () => {
     try {
       setIsGenerating(true);
+
+      // Delete existing unsubmitted puzzle if it exists
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user?.id) {
+        const { error: deleteError } = await supabase
+          .from('puzzle_progress')
+          .delete()
+          .eq('user_id', user.user.id)
+          .eq('submitted', false);
+
+        if (deleteError) throw deleteError;
+      }
+
       setPuzzle({ grid: [], across: [], down: [] });
       setGrid([]);
       
@@ -359,11 +375,7 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadSavedProgress().then(() => {
-        if (!grid.length) {
-          generateNewPuzzle();
-        }
-      });
+      loadSavedProgress();
     }
   }, [isAuthenticated]);
 
