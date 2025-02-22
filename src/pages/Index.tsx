@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -111,53 +112,66 @@ const Index = () => {
 
   const handleSubmit = async () => {
     let score = 0;
+    let totalCells = 0;
     
     grid.forEach(row => {
       row.forEach(cell => {
-        if (cell.letter && cell.letter === cell.userCurrentValue) {
-          score += 5;
+        if (cell.letter) {
+          totalCells++;
+          if (cell.letter === cell.userCurrentValue) {
+            score += 5;
+          }
         }
       });
     });
 
     try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.id) throw new Error('User not found');
+
       const { data: existingProgress } = await supabase
         .from('puzzle_progress')
         .select('id')
-        .limit(1)
-        .single();
+        .eq('user_id', user.user.id)
+        .maybeSingle();
 
       if (existingProgress) {
-        await supabase
+        const { error } = await supabase
           .from('puzzle_progress')
           .update({
             grid_state: grid as unknown as Json,
             score: score,
             submitted: true,
             last_updated: new Date().toISOString(),
+            completed_at: new Date().toISOString()
           })
           .eq('id', existingProgress.id);
+
+        if (error) throw error;
       } else {
-        await supabase
+        const { error } = await supabase
           .from('puzzle_progress')
           .insert({
             grid_state: grid as unknown as Json,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: user.user.id,
             score: score,
             submitted: true,
+            completed_at: new Date().toISOString()
           });
+
+        if (error) throw error;
       }
 
       setIsSubmitted(true);
       toast({
-        title: "Puzzle Submitted!",
-        description: `Your score: ${score} points`,
+        title: "Puzzle Submitted Successfully!",
+        description: `Your final score: ${score} points out of ${totalCells * 5} possible points`,
       });
     } catch (error) {
       console.error('Error submitting puzzle:', error);
       toast({
         title: "Error",
-        description: "Failed to submit puzzle",
+        description: "Failed to submit puzzle. Please try again.",
         variant: "destructive",
       });
     }
