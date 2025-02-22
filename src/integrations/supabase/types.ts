@@ -9,7 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      puzzle_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          grid_state: Json
+          id: string
+          last_updated: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          grid_state: Json
+          id?: string
+          last_updated?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          grid_state?: Json
+          id?: string
+          last_updated?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
