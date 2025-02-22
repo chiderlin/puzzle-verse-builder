@@ -53,37 +53,106 @@ const Index = () => {
 
       setPuzzle(data);
 
-      const findWordStarts = () => {
-        const wordStarts = new Set();
-        data.across.forEach((clue: { number: number }) => {
-          wordStarts.add(clue.number);
-        });
-        data.down.forEach((clue: { number: number }) => {
-          wordStarts.add(clue.number);
-        });
-        return wordStarts;
+      const getWordAt = (startRow: number, startCol: number, direction: "across" | "down"): string => {
+        let word = "";
+        let row = startRow;
+        let col = startCol;
+        
+        while (row < data.grid.length && col < data.grid[row].length && data.grid[row][col].letter) {
+          word += data.grid[row][col].letter;
+          if (direction === "across") col++;
+          else row++;
+        }
+        
+        return word;
       };
 
-      const isPartOfWordStart = (row: number, col: number, grid: any[][]) => {
-        const cell = grid[row][col];
-        if (!cell.letter) return false;
+      const generateScatteredHints = (word: string): boolean[] => {
+        const length = word.length;
+        const hints = new Array(length).fill(false);
         
-        if (cell.number) return true;
-        if (row > 0 && grid[row - 1][col]?.number) return true;
-        if (col > 0 && grid[row][col - 1]?.number) return true;
+        if (length === 3) {
+          const randomSkip = Math.floor(Math.random() * 3);
+          for (let i = 0; i < 3; i++) {
+            if (i !== randomSkip) hints[i] = true;
+          }
+          return hints;
+        }
+
+        const numHints = Math.floor(Math.random() * 2) + 2;
+        const availablePositions = Array.from({length}, (_, i) => i);
         
-        return false;
+        const endPos = Math.random() < 0.5 ? 0 : length - 1;
+        hints[endPos] = true;
+        availablePositions.splice(availablePositions.indexOf(endPos), 1);
+
+        for (let i = 1; i < numHints && availablePositions.length > 0; i++) {
+          const validPositions = availablePositions.filter(pos => 
+            !hints[pos - 1] && !hints[pos + 1]
+          );
+          
+          if (validPositions.length === 0) break;
+          
+          const randomIndex = Math.floor(Math.random() * validPositions.length);
+          const pos = validPositions[randomIndex];
+          hints[pos] = true;
+          availablePositions.splice(availablePositions.indexOf(pos), 1);
+        }
+
+        return hints;
       };
 
       const processedGrid = data.grid.map((row: any[], rowIndex: number) =>
         row.map((cell: any, colIndex: number) => {
-          const isWordStart = isPartOfWordStart(rowIndex, colIndex, data.grid);
+          let isHint = false;
+
+          if (cell.number) {
+            const acrossWord = getWordAt(rowIndex, colIndex, "across");
+            if (acrossWord.length > 1) {
+              const acrossHints = generateScatteredHints(acrossWord);
+              if (acrossHints[0]) isHint = true;
+            }
+
+            const downWord = getWordAt(rowIndex, colIndex, "down");
+            if (downWord.length > 1) {
+              const downHints = generateScatteredHints(downWord);
+              if (downHints[0]) isHint = true;
+            }
+          } else {
+            let isPartOfWord = false;
+            let relativePos = 0;
+
+            if (colIndex > 0 && data.grid[rowIndex][colIndex - 1].letter) {
+              isPartOfWord = true;
+              let col = colIndex;
+              while (col > 0 && data.grid[rowIndex][col - 1].letter) {
+                col--;
+                relativePos++;
+              }
+              const word = getWordAt(rowIndex, col, "across");
+              const hints = generateScatteredHints(word);
+              if (hints[relativePos]) isHint = true;
+            }
+
+            if (rowIndex > 0 && data.grid[rowIndex - 1][colIndex].letter) {
+              isPartOfWord = true;
+              let row = rowIndex;
+              while (row > 0 && data.grid[row - 1][colIndex].letter) {
+                row--;
+                relativePos++;
+              }
+              const word = getWordAt(row, colIndex, "down");
+              const hints = generateScatteredHints(word);
+              if (hints[relativePos]) isHint = true;
+            }
+          }
+
           return {
             ...cell,
             isActive: false,
             isHighlighted: false,
-            isRevealed: Math.random() < 0.2, // Reduce random reveals to 20%
-            isPartialHint: isWordStart, // Show first letters of words as hints
+            isRevealed: false,
+            isPartialHint: isHint,
           };
         })
       );
@@ -92,7 +161,7 @@ const Index = () => {
 
       toast({
         title: "New Puzzle Generated",
-        description: "Start solving the new crossword puzzle! First letters are revealed as hints.",
+        description: "Start solving! Random letter hints are provided for each word.",
       });
     } catch (error) {
       console.error('Error generating puzzle:', error);
