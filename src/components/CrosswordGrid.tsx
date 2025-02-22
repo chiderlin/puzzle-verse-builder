@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 
 interface CrosswordCell {
@@ -185,21 +184,6 @@ export const CrosswordGrid = ({
             </div>
           ))
         ))}
-      </div>
-
-      <div className="mt-12 grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
-        <div>
-          <h2 className="font-bold text-xl mb-4 border-b pb-2">ACROSS</h2>
-          <div className="space-y-2 text-sm">
-            {/* Clues will be rendered here */}
-          </div>
-        </div>
-        <div>
-          <h2 className="font-bold text-xl mb-4 border-b pb-2">DOWN</h2>
-          <div className="space-y-2 text-sm">
-            {/* Clues will be rendered here */}
-          </div>
-        </div>
       </div>
     </div>
   );
