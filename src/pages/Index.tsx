@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -61,17 +60,17 @@ const defaultPuzzle = {
 export default function Index() {
   const [puzzle, setPuzzle] = useState(defaultPuzzle);
   const [gameGrid, setGameGrid] = useState<any[][]>([]);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const { toast } = useToast();
 
   useEffect(() => {
+    // Initialize the game grid without revealing any letters
     setGameGrid(
       puzzle.grid.map((row) =>
         row.map((cell) => ({
           ...cell,
           isActive: false,
           isHighlighted: false,
-          isRevealed: false,
+          isRevealed: false, // Changed to false so users can input letters
         }))
       )
     );
@@ -157,19 +156,6 @@ export default function Index() {
     );
   };
 
-  const handleAuthSubmit = async (email: string, password: string) => {
-    try {
-      if (authMode === "login") {
-        await supabase.auth.signInWithPassword({ email, password });
-      } else {
-        await supabase.auth.signUp({ email, password });
-      }
-    } catch (error) {
-      console.error("Auth error:", error);
-      throw error;
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
@@ -185,11 +171,7 @@ export default function Index() {
           </div>
         </div>
         <div className="w-full md:w-1/3">
-          <AuthForm 
-            mode={authMode}
-            onSubmit={handleAuthSubmit}
-            onToggle={() => setAuthMode(authMode === "login" ? "register" : "login")}
-          />
+          <AuthForm />
           <div className="mt-8">
             <ClueList across={puzzle.across} down={puzzle.down} />
           </div>
