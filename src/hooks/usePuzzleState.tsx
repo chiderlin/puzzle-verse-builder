@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -179,18 +180,23 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
     try {
       setIsGenerating(true);
 
-      if (currentPuzzleId) {
+      // Get current user
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user?.id) {
+        // Delete any unsubmitted progress for this user
         const { error: deleteError } = await supabase
           .from('puzzle_progress')
           .delete()
-          .eq('id', currentPuzzleId);
+          .eq('user_id', user.user.id)
+          .eq('submitted', false);
 
         if (deleteError) throw deleteError;
-        setCurrentPuzzleId(null);
       }
 
+      // Reset puzzle state
       setPuzzle({ grid: [], across: [], down: [] });
       setGrid([]);
+      setCurrentPuzzleId(null);
       
       const { data, error } = await supabase.functions.invoke('generate-crossword');
       
