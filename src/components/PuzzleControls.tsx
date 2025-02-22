@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { SaveIcon, EyeIcon } from "lucide-react";
+import { SaveIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import { useState } from "react";
 
 interface PuzzleControlsProps {
   onSignOut: () => void;
@@ -19,6 +20,13 @@ export const PuzzleControls = ({
   isGenerating,
   isSaving
 }: PuzzleControlsProps) => {
+  const [showingAnswers, setShowingAnswers] = useState(false);
+
+  const handleToggleAnswers = () => {
+    setShowingAnswers(!showingAnswers);
+    onRevealAnswer();
+  };
+
   return (
     <div className="text-center mb-8 animate-fade-in">
       <h1 className="text-3xl font-bold text-slate-900 mb-2">Crossword Puzzle</h1>
@@ -52,14 +60,24 @@ export const PuzzleControls = ({
           {isSaving ? "Saving..." : "Save Progress"}
         </Button>
         <Button
-          onClick={onRevealAnswer}
+          onClick={handleToggleAnswers}
           variant="secondary"
           className="flex items-center gap-2"
         >
-          <EyeIcon className="h-4 w-4" />
-          Show Answer
+          {showingAnswers ? (
+            <>
+              <EyeOffIcon className="h-4 w-4" />
+              Hide Answer
+            </>
+          ) : (
+            <>
+              <EyeIcon className="h-4 w-4" />
+              Show Answer
+            </>
+          )}
         </Button>
       </div>
     </div>
   );
 };
+
