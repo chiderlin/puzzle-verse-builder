@@ -23,17 +23,11 @@ export const Leaderboard = () => {
 
         if (profilesError) throw profilesError;
 
-        // Get user emails for the top profiles
-        const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
-        if (usersError) throw usersError;
-
-        const leaderboardWithEmails = profiles.map(profile => {
-          const user = users.users.find(u => u.id === profile.id);
-          return {
-            ...profile,
-            user_email: user?.email ? user.email.split('@')[0] : 'Anonymous'
-          };
-        });
+        // Since we can't access auth.users directly, we'll just use anonymous usernames
+        const leaderboardWithEmails = profiles.map((profile, index) => ({
+          ...profile,
+          user_email: `Player ${index + 1}`
+        }));
 
         setLeaderboard(leaderboardWithEmails);
       } catch (error) {
