@@ -98,10 +98,10 @@ export const CrosswordGrid = ({
   return (
     <div 
       ref={gridRef} 
-      className="grid gap-0 bg-white p-4 rounded-lg shadow-lg animate-fade-in max-w-3xl mx-auto"
+      className="grid gap-0 bg-white p-8 rounded-lg shadow-lg animate-fade-in max-w-4xl mx-auto"
     >
       {grid.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex gap-0">
+        <div key={rowIndex} className="flex gap-0 justify-center">
           {row.map((cell, colIndex) => (
             <div 
               key={`${rowIndex}-${colIndex}`} 
@@ -110,16 +110,16 @@ export const CrosswordGrid = ({
                 ${!cell.letter ? 'bg-gray-900' : 'bg-white'}
               `}
               style={{
-                width: '45px',
-                height: '45px'
+                width: '60px',
+                height: '60px'
               }}
             >
               {cell.letter && (
                 <>
                   {cell.number && (
                     <span 
-                      className="absolute top-0.5 left-1 text-xs font-bold text-gray-900"
-                      style={{ fontSize: '11px' }}
+                      className="absolute top-1 left-1.5 text-sm font-bold text-gray-900"
+                      style={{ fontSize: '14px' }}
                     >
                       {cell.number}
                     </span>
@@ -129,7 +129,7 @@ export const CrosswordGrid = ({
                       type="text"
                       maxLength={1}
                       className={`
-                        w-full h-full text-center text-xl font-bold pt-2
+                        w-full h-full text-center text-2xl font-bold pt-3
                         focus:outline-none focus:bg-blue-50
                         ${cell.isActive ? "bg-blue-50" : "bg-white"}
                         ${cell.isHighlighted ? "bg-yellow-50" : ""}
@@ -151,7 +151,7 @@ export const CrosswordGrid = ({
                     {!cell.isRevealed && !cell.isPartialHint && cell.letter && (
                       <button
                         onClick={() => onHintRequest(rowIndex, colIndex)}
-                        className="absolute -right-6 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"
+                        className="absolute -right-7 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"
                         title="Get hint"
                       >
                         ?
