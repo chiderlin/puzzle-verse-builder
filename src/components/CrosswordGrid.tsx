@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 
 interface CrosswordCell {
@@ -108,7 +107,7 @@ export const CrosswordGrid = ({
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="text-center mb-8 space-y-2">
+      <div className="text-center mb-8">
         <div className="flex justify-center gap-8 items-center">
           <img 
             src="/lovable-uploads/c6fa1836-b744-4791-a522-0d9aff5c5f6b.png" 
@@ -122,7 +121,6 @@ export const CrosswordGrid = ({
             className="w-16 h-16"
           />
         </div>
-        <p className="text-xl font-medium text-gray-600">CROSSWORD PUZZLE</p>
       </div>
 
       <div 
