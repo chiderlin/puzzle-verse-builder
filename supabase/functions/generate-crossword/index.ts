@@ -16,33 +16,36 @@ serve(async (req) => {
   }
 
   try {
-    const prompt = `Generate a 5x5 crossword puzzle with the following requirements:
-    1. The puzzle should be 5x5 in size
-    2. Words should be 3-5 letters long
+    const prompt = `Generate a crossword puzzle with these requirements:
+    1. Create an irregularly shaped crossword puzzle (not necessarily square)
+    2. Words can be of varying lengths (3-8 letters)
     3. Words must intersect properly sharing common letters
-    4. Each word should connect to at least one other word
+    4. Each word must connect to at least one other word
     5. Use common English words that are easily recognizable
     6. Each clue should be clear and appropriate for casual players
-    7. Return the result in JSON format with this structure:
+    7. The grid should be compact but can take any shape needed
+    8. Return the result in JSON format with this structure:
     {
       "grid": [
-        [{"letter": "A", "number": 1}, {"letter": "P", "number": null}, {"letter": "T", "number": null}, {"letter": "", "number": 2}, {"letter": "", "number": null}],
-        [{"letter": "R", "number": 3}, {"letter": "I", "number": null}, {"letter": "D", "number": null}, {"letter": "E", "number": null}, {"letter": "", "number": null}],
-        [{"letter": "T", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}],
-        [{"letter": "", "number": 4}, {"letter": "", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}],
-        [{"letter": "", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}]
+        [{"letter": "C", "number": 1}, {"letter": "A", "number": null}, {"letter": "T", "number": null}],
+        [{"letter": "O", "number": 2}, {"letter": "W", "number": null}, {"letter": "L", "number": null}],
+        [{"letter": "W", "number": null}, {"letter": "", "number": null}, {"letter": "", "number": null}]
       ],
       "across": [
-        {"number": 1, "text": "Small apartment"},
-        {"number": 3, "text": "Take a horse journey"},
-        {"number": 4, "text": "Your clue here"}
+        {"number": 1, "text": "A feline pet"},
+        {"number": 2, "text": "A nocturnal bird"}
       ],
       "down": [
-        {"number": 1, "text": "Part of the body"},
-        {"number": 2, "text": "Your clue here"}
+        {"number": 1, "text": "A bovine female"}
       ]
     }
-    Make sure all words are properly connected and make sense as a crossword puzzle.`;
+    
+    Important rules:
+    1. Make sure all words are properly connected
+    2. The grid should be as compact as possible
+    3. Empty cells should be represented with empty strings
+    4. Each word must share at least one letter with another word
+    5. Numbers should only appear at the start of words`;
 
     console.log('Sending prompt to Gemini API:', prompt);
 
@@ -84,7 +87,7 @@ serve(async (req) => {
         throw new Error('Invalid puzzle structure');
       }
 
-      // Ensure all cells have the required properties
+      // Clean up the grid data
       puzzleData.grid = puzzleData.grid.map((row: any[]) =>
         row.map((cell: any) => ({
           letter: cell.letter || "",
@@ -92,10 +95,29 @@ serve(async (req) => {
         }))
       );
 
+      // Validate word connections
+      const hasConnections = puzzleData.grid.some((row: any[], rowIndex: number) =>
+        row.some((cell: any, colIndex: number) => {
+          if (!cell.letter) return false;
+          
+          // Check adjacent cells for connections
+          const hasUp = rowIndex > 0 && puzzleData.grid[rowIndex - 1][colIndex]?.letter;
+          const hasDown = rowIndex < puzzleData.grid.length - 1 && puzzleData.grid[rowIndex + 1][colIndex]?.letter;
+          const hasLeft = colIndex > 0 && row[colIndex - 1]?.letter;
+          const hasRight = colIndex < row.length - 1 && row[colIndex + 1]?.letter;
+          
+          return (hasUp || hasDown) && (hasLeft || hasRight);
+        })
+      );
+
+      if (!hasConnections) {
+        throw new Error('Generated puzzle lacks proper word connections');
+      }
+
       console.log('Successfully generated puzzle:', puzzleData);
     } catch (error) {
-      console.error('Error parsing puzzle data:', error);
-      throw new Error('Failed to parse generated crossword data');
+      console.error('Error processing puzzle data:', error);
+      throw new Error('Failed to generate valid crossword puzzle');
     }
 
     return new Response(JSON.stringify(puzzleData), {
