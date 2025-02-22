@@ -6,14 +6,15 @@ interface CrosswordCell {
   number?: number;
   isActive: boolean;
   isHighlighted: boolean;
-  isRevealed?: boolean; // New property to track if the letter is revealed
+  isRevealed?: boolean;
+  isPartialHint?: boolean; // New property to mark cells that are shown as hints
 }
 
 interface CrosswordGridProps {
   grid: CrosswordCell[][];
   onCellClick: (row: number, col: number) => void;
   onCellChange: (row: number, col: number, value: string) => void;
-  onHintRequest: (row: number, col: number) => void; // New prop for hint functionality
+  onHintRequest: (row: number, col: number) => void;
 }
 
 export const CrosswordGrid = ({ 
@@ -57,15 +58,16 @@ export const CrosswordGrid = ({
                   maxLength={1}
                   className={`crossword-cell ${cell.isActive ? "active" : ""} ${
                     cell.isHighlighted ? "highlighted" : ""
-                  }`}
-                  value={cell.isRevealed ? cell.letter : ""}
+                  } ${cell.isPartialHint ? "bg-slate-100" : ""}`}
+                  value={cell.isRevealed || cell.isPartialHint ? cell.letter : ""}
                   onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
                   onClick={() => onCellClick(rowIndex, colIndex)}
                   onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
                   data-row={rowIndex}
                   data-col={colIndex}
+                  readOnly={cell.isPartialHint}
                 />
-                {!cell.isRevealed && cell.letter && (
+                {!cell.isRevealed && !cell.isPartialHint && cell.letter && (
                   <button
                     onClick={() => onHintRequest(rowIndex, colIndex)}
                     className="absolute -right-6 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"

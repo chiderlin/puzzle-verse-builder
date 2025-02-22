@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Default puzzle structure
 const defaultPuzzle = {
   grid: [
     [{ letter: "", number: 1 }, { letter: "", number: 2 }, { letter: "" }],
@@ -53,20 +52,47 @@ const Index = () => {
       if (error) throw error;
 
       setPuzzle(data);
-      setGrid(
-        data.grid.map((row: any[]) =>
-          row.map((cell) => ({
+
+      const findWordStarts = () => {
+        const wordStarts = new Set();
+        data.across.forEach((clue: { number: number }) => {
+          wordStarts.add(clue.number);
+        });
+        data.down.forEach((clue: { number: number }) => {
+          wordStarts.add(clue.number);
+        });
+        return wordStarts;
+      };
+
+      const isPartOfWordStart = (row: number, col: number, grid: any[][]) => {
+        const cell = grid[row][col];
+        if (!cell.letter) return false;
+        
+        if (cell.number) return true;
+        if (row > 0 && grid[row - 1][col]?.number) return true;
+        if (col > 0 && grid[row][col - 1]?.number) return true;
+        
+        return false;
+      };
+
+      const processedGrid = data.grid.map((row: any[], rowIndex: number) =>
+        row.map((cell: any, colIndex: number) => {
+          const isWordStart = isPartOfWordStart(rowIndex, colIndex, data.grid);
+          return {
             ...cell,
             isActive: false,
             isHighlighted: false,
-            isRevealed: Math.random() < 0.3, // Randomly reveal 30% of cells
-          }))
-        )
+            isRevealed: Math.random() < 0.2, // Reduce random reveals to 20%
+            isPartialHint: isWordStart, // Show first letters of words as hints
+          };
+        })
       );
+
+      setGrid(processedGrid);
 
       toast({
         title: "New Puzzle Generated",
-        description: "Start solving the new crossword puzzle!",
+        description: "Start solving the new crossword puzzle! First letters are revealed as hints.",
       });
     } catch (error) {
       console.error('Error generating puzzle:', error);
@@ -92,13 +118,11 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // Check initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
       setIsLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -109,7 +133,6 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    // Generate initial puzzle when authenticated
     if (isAuthenticated) {
       generateNewPuzzle();
     }
