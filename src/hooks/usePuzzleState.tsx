@@ -96,8 +96,7 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
           );
           setGrid(processedGrid);
           
-          // Check if submitted exists in the progress object before accessing it
-          if (progress.hasOwnProperty('submitted') && progress.submitted) {
+          if (progress.submitted) {
             toast({
               title: "Puzzle Already Submitted",
               description: "This puzzle has already been completed and submitted.",
@@ -132,13 +131,19 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
 
     setIsSaving(true);
     try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.id) throw new Error('User not found');
+
+      // Check for existing unsubmitted puzzle
       const { data: existingProgress } = await supabase
         .from('puzzle_progress')
         .select('id')
-        .limit(1)
-        .single();
+        .eq('user_id', user.user.id)
+        .eq('submitted', false)
+        .maybeSingle();
 
       if (existingProgress) {
+        // Update existing puzzle progress
         await supabase
           .from('puzzle_progress')
           .update({
@@ -147,11 +152,13 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
           })
           .eq('id', existingProgress.id);
       } else {
+        // Create new puzzle progress
         await supabase
           .from('puzzle_progress')
           .insert({
             grid_state: grid as unknown as Json,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: user.user.id,
+            submitted: false
           });
       }
 
