@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
 import { AuthForm } from "@/components/AuthForm";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Sample crossword data
 const samplePuzzle = {
@@ -24,6 +25,7 @@ const samplePuzzle = {
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const { toast } = useToast();
   
@@ -41,20 +43,40 @@ const Index = () => {
     null
   );
 
+  useEffect(() => {
+    // Check initial auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleAuth = async (email: string, password: string) => {
     try {
-      // TODO: Implement actual authentication logic with Supabase
-      console.log("Auth attempt with:", email, password);
-      toast({
-        title: "Not implemented",
-        description: "Please connect Supabase to enable authentication",
-      });
+      const { error } = authMode === "login"
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({ email, password });
+
+      if (error) throw error;
+
+      if (authMode === "register") {
+        toast({
+          title: "Success",
+          description: "Please check your email to confirm your account",
+        });
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Authentication failed. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Auth error:", error);
+      throw error;
     }
   };
 
@@ -83,6 +105,14 @@ const Index = () => {
     // Here you would also highlight relevant cells
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-slate-600">Loading...</div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 flex items-center">
@@ -107,6 +137,13 @@ const Index = () => {
         <div className="text-center mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Crossword Puzzle</h1>
           <p className="text-slate-600">Challenge your mind with our daily crossword</p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => supabase.auth.signOut()}
+          >
+            Sign Out
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
