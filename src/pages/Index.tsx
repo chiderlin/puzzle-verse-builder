@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -10,39 +9,55 @@ import { supabase } from "@/integrations/supabase/client";
 const defaultPuzzle = {
   grid: [
     [
-      { letter: "M", number: 1 }, 
+      { letter: "C", number: 1 }, 
+      { letter: "H", number: null }, 
       { letter: "A", number: null }, 
-      { letter: "K", number: null }, 
-      { letter: "E", number: null }
+      { letter: "T", number: null },
+      { letter: "", number: null }
     ],
     [
+      { letter: "O", number: 2 }, 
+      { letter: "U", number: null }, 
+      { letter: "T", number: null },
+      { letter: "E", number: 3 },
+      { letter: "A", number: null }
+    ],
+    [
+      { letter: "T", number: null }, 
+      { letter: "B", number: 4 }, 
       { letter: "I", number: null }, 
+      { letter: "A", number: null },
+      { letter: "", number: null }
+    ],
+    [
       { letter: "", number: null }, 
+      { letter: "I", number: null }, 
+      { letter: "M", number: null }, 
       { letter: "", number: null },
       { letter: "", number: null }
     ],
     [
-      { letter: "L", number: null }, 
       { letter: "", number: null }, 
-      { letter: "", number: null },
-      { letter: "", number: null }
-    ],
-    [
-      { letter: "K", number: null }, 
+      { letter: "T", number: null }, 
       { letter: "", number: null }, 
       { letter: "", number: null },
       { letter: "", number: null }
     ]
   ],
   across: [
-    { number: 1, text: "To create or produce something", length: 4 }
+    { number: 1, text: "To have a friendly conversation (British slang)", length: 4 },
+    { number: 2, text: "Morning beverage served at 4 o'clock (British tradition)", length: 3 },
+    { number: 3, text: "Drink made from leaves (British staple)", length: 3 },
+    { number: 4, text: "To consume food or drink", length: 3 }
   ],
   down: [
-    { number: 1, text: "A dairy product", length: 4 }
+    { number: 1, text: "A warm, comfortable house (British term)", length: 3 },
+    { number: 2, text: "A traditional British pub", length: 5 },
+    { number: 3, text: "Another word for 'yes' in British English", length: 3 }
   ],
 };
 
-export default function Index() {
+const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -55,46 +70,231 @@ export default function Index() {
         ...cell,
         isActive: false,
         isHighlighted: false,
-        isRevealed: false,
+        isRevealed: Math.random() < 0.3,
       }))
     )
   );
 
-  const [activeClue, setActiveClue] = useState<{ direction: "across" | "down"; number: number } | null>(null);
+  const [activeClue, setActiveClue] = useState<{ direction: "across" | "down"; number: number } | null>(
+    null
+  );
 
-  const generateHints = (wordLength: number) => {
-    const hints: boolean[] = new Array(wordLength).fill(false);
-    const numHints = wordLength === 3 ? 1 : Math.min(3, wordLength - 1);
-    
-    // Always reveal one random position
-    let positions = Array.from({length: wordLength}, (_, i) => i);
-    for (let i = 0; i < numHints; i++) {
-      if (positions.length === 0) break;
-      const randomIndex = Math.floor(Math.random() * positions.length);
-      const position = positions[randomIndex];
-      hints[position] = true;
+  const generateNewPuzzle = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-crossword');
       
-      // Remove adjacent positions to avoid consecutive hints
-      positions = positions.filter(p => 
-        p !== position - 1 && p !== position && p !== position + 1
+      if (error) throw error;
+
+      const acrossWithLengths = data.across.map((clue: any) => {
+        const row = data.grid.findIndex((r: any[]) => 
+          r.some((cell: any) => cell.number === clue.number)
+        );
+        const col = data.grid[row].findIndex((cell: any) => 
+          cell.number === clue.number
+        );
+        let length = 0;
+        let currentCol = col;
+        while (currentCol < data.grid[row].length && data.grid[row][currentCol].letter) {
+          length++;
+          currentCol++;
+        }
+        return { ...clue, length };
+      });
+
+      const downWithLengths = data.down.map((clue: any) => {
+        const row = data.grid.findIndex((r: any[]) => 
+          r.some((cell: any) => cell.number === clue.number)
+        );
+        const col = data.grid[row].findIndex((cell: any) => 
+          cell.number === clue.number
+        );
+        let length = 0;
+        let currentRow = row;
+        while (currentRow < data.grid.length && data.grid[currentRow][col].letter) {
+          length++;
+          currentRow++;
+        }
+        return { ...clue, length };
+      });
+
+      setPuzzle({
+        ...data,
+        across: acrossWithLengths,
+        down: downWithLengths
+      });
+
+      const getWordAt = (startRow: number, startCol: number, direction: "across" | "down"): string => {
+        let word = "";
+        let row = startRow;
+        let col = startCol;
+        
+        while (row < data.grid.length && col < data.grid[row].length && data.grid[row][col].letter) {
+          word += data.grid[row][col].letter;
+          if (direction === "across") col++;
+          else row++;
+        }
+        
+        return word;
+      };
+
+      const generateScatteredHints = (word: string): boolean[] => {
+        const length = word.length;
+        const hints = new Array(length).fill(false);
+        
+        if (length === 3) {
+          const randomSkip = Math.floor(Math.random() * 3);
+          for (let i = 0; i < 3; i++) {
+            if (i !== randomSkip) hints[i] = true;
+          }
+          return hints;
+        }
+
+        const numHints = Math.floor(Math.random() * 2) + 2;
+        const availablePositions = Array.from({length}, (_, i) => i);
+        
+        const endPos = Math.random() < 0.5 ? 0 : length - 1;
+        hints[endPos] = true;
+        availablePositions.splice(availablePositions.indexOf(endPos), 1);
+
+        for (let i = 1; i < numHints && availablePositions.length > 0; i++) {
+          const validPositions = availablePositions.filter(pos => 
+            !hints[pos - 1] && !hints[pos + 1]
+          );
+          
+          if (validPositions.length === 0) break;
+          
+          const randomIndex = Math.floor(Math.random() * validPositions.length);
+          const pos = validPositions[randomIndex];
+          hints[pos] = true;
+          availablePositions.splice(availablePositions.indexOf(pos), 1);
+        }
+
+        return hints;
+      };
+
+      const processedGrid = data.grid.map((row: any[], rowIndex: number) =>
+        row.map((cell: any, colIndex: number) => {
+          let isHint = false;
+
+          if (cell.number) {
+            const acrossWord = getWordAt(rowIndex, colIndex, "across");
+            if (acrossWord.length > 1) {
+              const acrossHints = generateScatteredHints(acrossWord);
+              if (acrossHints[0]) isHint = true;
+            }
+
+            const downWord = getWordAt(rowIndex, colIndex, "down");
+            if (downWord.length > 1) {
+              const downHints = generateScatteredHints(downWord);
+              if (downHints[0]) isHint = true;
+            }
+          } else {
+            let isPartOfWord = false;
+            let relativePos = 0;
+
+            if (colIndex > 0 && data.grid[rowIndex][colIndex - 1].letter) {
+              isPartOfWord = true;
+              let col = colIndex;
+              while (col > 0 && data.grid[rowIndex][col - 1].letter) {
+                col--;
+                relativePos++;
+              }
+              const word = getWordAt(rowIndex, col, "across");
+              const hints = generateScatteredHints(word);
+              if (hints[relativePos]) isHint = true;
+            }
+
+            if (rowIndex > 0 && data.grid[rowIndex - 1][colIndex].letter) {
+              isPartOfWord = true;
+              let row = rowIndex;
+              while (row > 0 && data.grid[row - 1][colIndex].letter) {
+                row--;
+                relativePos++;
+              }
+              const word = getWordAt(row, colIndex, "down");
+              const hints = generateScatteredHints(word);
+              if (hints[relativePos]) isHint = true;
+            }
+          }
+
+          return {
+            ...cell,
+            isActive: false,
+            isHighlighted: false,
+            isRevealed: false,
+            isPartialHint: isHint,
+          };
+        })
       );
+
+      setGrid(processedGrid);
+
+      toast({
+        title: "New Puzzle Generated",
+        description: "Start solving! Random letter hints are provided for each word.",
+      });
+    } catch (error) {
+      console.error('Error generating puzzle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate new puzzle",
+        variant: "destructive",
+      });
     }
-    
-    return hints;
   };
 
-  const handleRevealGrid = () => {
-    setGrid(grid.map(row =>
-      row.map(cell => ({
-        ...cell,
-        isRevealed: true
-      }))
-    ));
-    
+  const handleHintRequest = (row: number, col: number) => {
+    const newGrid = [...grid];
+    newGrid[row][col] = {
+      ...newGrid[row][col],
+      isRevealed: true,
+    };
+    setGrid(newGrid);
     toast({
-      title: "Solution Revealed",
-      description: "The complete solution has been shown.",
+      title: "Hint Revealed",
+      description: `The letter at position (${row + 1}, ${col + 1}) is "${grid[row][col].letter}"`,
     });
+  };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      generateNewPuzzle();
+    }
+  }, [isAuthenticated]);
+
+  const handleAuth = async (email: string, password: string) => {
+    try {
+      const { error } = authMode === "login"
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({ email, password });
+
+      if (error) throw error;
+
+      if (authMode === "register") {
+        toast({
+          title: "Success",
+          description: "Please check your email to confirm your account",
+        });
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+      throw error;
+    }
   };
 
   const handleCellClick = (row: number, col: number) => {
@@ -117,74 +317,9 @@ export default function Index() {
     setGrid(newGrid);
   };
 
-  const handleHintRequest = (row: number, col: number) => {
-    // Find word length and generate hints
-    let wordLength = 0;
-    let isAcross = false;
-    
-    // Check if part of across word
-    let currentCol = col;
-    while (currentCol < grid[row].length && grid[row][currentCol].letter) {
-      wordLength++;
-      currentCol++;
-    }
-    currentCol = col - 1;
-    while (currentCol >= 0 && grid[row][currentCol].letter) {
-      wordLength++;
-      currentCol--;
-    }
-    
-    if (wordLength > 1) isAcross = true;
-    
-    // If not part of across word, check down word
-    if (!isAcross) {
-      wordLength = 0;
-      let currentRow = row;
-      while (currentRow < grid.length && grid[currentRow][col].letter) {
-        wordLength++;
-        currentRow++;
-      }
-      currentRow = row - 1;
-      while (currentRow >= 0 && grid[currentRow][col].letter) {
-        wordLength++;
-        currentRow--;
-      }
-    }
-    
-    const hints = generateHints(wordLength);
-    
-    // Apply hint for current cell
-    const newGrid = [...grid];
-    newGrid[row][col] = {
-      ...newGrid[row][col],
-      isRevealed: true,
-    };
-    setGrid(newGrid);
-    
-    toast({
-      title: "Hint Revealed",
-      description: `The letter at position (${row + 1}, ${col + 1}) is "${grid[row][col].letter}"`,
-    });
-  };
-
   const handleClueClick = (direction: "across" | "down", number: number) => {
     setActiveClue({ direction, number });
   };
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   if (isLoading) {
     return (
@@ -204,18 +339,7 @@ export default function Index() {
           </div>
           <AuthForm
             mode={authMode}
-            onSubmit={async (email, password) => {
-              try {
-                if (authMode === "login") {
-                  await supabase.auth.signInWithPassword({ email, password });
-                } else {
-                  await supabase.auth.signUp({ email, password });
-                }
-              } catch (error) {
-                console.error("Auth error:", error);
-                throw error;
-              }
-            }}
+            onSubmit={handleAuth}
             onToggle={() => setAuthMode(authMode === "login" ? "register" : "login")}
           />
         </div>
@@ -237,10 +361,9 @@ export default function Index() {
               Sign Out
             </Button>
             <Button
-              onClick={handleRevealGrid}
-              variant="secondary"
+              onClick={generateNewPuzzle}
             >
-              Show Answer
+              Generate New Puzzle
             </Button>
           </div>
         </div>
@@ -284,4 +407,6 @@ export default function Index() {
       </div>
     </div>
   );
-}
+};
+
+export default Index;
