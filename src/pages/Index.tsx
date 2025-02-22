@@ -60,6 +60,7 @@ const defaultPuzzle = {
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [puzzle, setPuzzle] = useState(defaultPuzzle);
   const { toast } = useToast();
@@ -81,6 +82,7 @@ const Index = () => {
 
   const generateNewPuzzle = async () => {
     try {
+      setIsGenerating(true);
       const { data, error } = await supabase.functions.invoke('generate-crossword');
       
       if (error) throw error;
@@ -240,6 +242,8 @@ const Index = () => {
         description: "Failed to generate new puzzle",
         variant: "destructive",
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -362,8 +366,16 @@ const Index = () => {
             </Button>
             <Button
               onClick={generateNewPuzzle}
+              disabled={isGenerating}
             >
-              Generate New Puzzle
+              {isGenerating ? (
+                <span className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Generating...
+                </span>
+              ) : (
+                "Generate New Puzzle"
+              )}
             </Button>
           </div>
         </div>
@@ -384,10 +396,7 @@ const Index = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <ClueList
                 title="Across"
-                clues={puzzle.across.map((clue) => ({
-                  ...clue,
-                  isActive: activeClue?.direction === "across" && activeClue.number === clue.number,
-                }))}
+                clues={puzzle.across}
                 onClueClick={(number) => handleClueClick("across", number)}
               />
             </div>
@@ -395,10 +404,7 @@ const Index = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <ClueList
                 title="Down"
-                clues={puzzle.down.map((clue) => ({
-                  ...clue,
-                  isActive: activeClue?.direction === "down" && activeClue.number === clue.number,
-                }))}
+                clues={puzzle.down}
                 onClueClick={(number) => handleClueClick("down", number)}
               />
             </div>
