@@ -1,5 +1,5 @@
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 interface CrosswordCell {
   letter: string;
@@ -8,6 +8,7 @@ interface CrosswordCell {
   isHighlighted: boolean;
   isRevealed?: boolean;
   isPartialHint?: boolean;
+  userInput?: string;
 }
 
 interface CrosswordGridProps {
@@ -24,10 +25,16 @@ export const CrosswordGrid = ({
   onHintRequest 
 }: CrosswordGridProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
+  const [userInputs, setUserInputs] = useState<{ [key: string]: string }>({});
 
   const handleCellInput = (row: number, col: number, value: string) => {
     if (value.length <= 1 && /^[A-Za-z]$/.test(value) || value === "") {
-      onCellChange(row, col, value.toUpperCase());
+      const upperValue = value.toUpperCase();
+      setUserInputs(prev => ({
+        ...prev,
+        [`${row}-${col}`]: upperValue
+      }));
+      onCellChange(row, col, upperValue);
       
       if (value) {
         const nextInput = gridRef.current?.querySelector(
@@ -47,6 +54,10 @@ export const CrosswordGrid = ({
       case "Backspace":
         if (currentInput.value === "") {
           e.preventDefault();
+          setUserInputs(prev => ({
+            ...prev,
+            [`${row}-${col}`]: ""
+          }));
           onCellChange(row, col, "");
           const prevInput = gridRef.current?.querySelector(
             `input[data-row="${row}"][data-col="${col - 1}"]`
@@ -139,13 +150,18 @@ export const CrosswordGrid = ({
                         ${cell.isActive ? "bg-blue-50" : "bg-white"}
                         ${cell.isHighlighted ? "bg-yellow-50" : ""}
                         ${cell.isPartialHint ? "bg-gray-50" : ""}
+                        ${!cell.isRevealed && !cell.isPartialHint ? "text-blue-600" : "text-black"}
                         uppercase
                       `}
                       style={{
                         border: 'none',
                         caretColor: 'transparent'
                       }}
-                      value={cell.isRevealed || cell.isPartialHint ? cell.letter : ""}
+                      value={
+                        cell.isRevealed || cell.isPartialHint 
+                          ? cell.letter 
+                          : userInputs[`${rowIndex}-${colIndex}`] || ""
+                      }
                       onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
                       onClick={() => onCellClick(rowIndex, colIndex)}
                       onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
