@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -62,7 +61,6 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   
-  // Initialize grid with userCurrentValue: "" for every cell
   const [grid, setGrid] = useState<GridCell[][]>(
     defaultPuzzle.grid.map((row) =>
       row.map((cell) => ({
@@ -70,7 +68,7 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
         isActive: false,
         isHighlighted: false,
         isRevealed: false,
-        userCurrentValue: "", // Initialize empty for all cells
+        userCurrentValue: "",
       }))
     )
   );
@@ -79,19 +77,14 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
     try {
       const { data: progress, error } = await supabase
         .from('puzzle_progress')
-        .select('grid_state, submitted')
+        .select('*')
         .order('last_updated', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        if (error.code !== 'PGRST116') { // No data found
-          throw error;
-        }
-        return;
-      }
+      if (error) throw error;
 
-      if (progress?.grid_state) {
+      if (progress && progress.grid_state) {
         const loadedGrid = progress.grid_state as unknown as GridCell[][];
         if (Array.isArray(loadedGrid) && loadedGrid.length > 0) {
           const processedGrid = loadedGrid.map(row =>

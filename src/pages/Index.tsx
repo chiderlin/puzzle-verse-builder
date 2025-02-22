@@ -130,7 +130,7 @@ const Index = () => {
         await supabase
           .from('puzzle_progress')
           .update({
-            grid_state: grid,
+            grid_state: grid as unknown as Json,
             score: score,
             submitted: true,
             last_updated: new Date().toISOString(),
@@ -140,7 +140,7 @@ const Index = () => {
         await supabase
           .from('puzzle_progress')
           .insert({
-            grid_state: grid,
+            grid_state: grid as unknown as Json,
             user_id: (await supabase.auth.getUser()).data.user?.id,
             score: score,
             submitted: true,
