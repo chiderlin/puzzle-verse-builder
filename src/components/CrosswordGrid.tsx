@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 
 interface CrosswordCell {
@@ -25,7 +26,6 @@ export const CrosswordGrid = ({
 }: CrosswordGridProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [userInputs, setUserInputs] = useState<{ [key: string]: string }>({});
-  const [showAnswer, setShowAnswer] = useState(false);
 
   const handleCellInput = (row: number, col: number, value: string) => {
     if (value.length <= 1 && /^[A-Za-z]$/.test(value) || value === "") {
@@ -106,105 +106,85 @@ export const CrosswordGrid = ({
     }
   };
 
-  const isInputCorrect = (row: number, col: number) => {
-    const userInput = userInputs[`${row}-${col}`];
-    return !userInput || userInput === grid[row][col].letter;
-  };
-
-  const toggleAnswer = () => {
-    setShowAnswer(!showAnswer);
-  };
-
   return (
-    <div className="space-y-4">
-      <div 
-        ref={gridRef} 
-        className="grid gap-0 bg-white p-8 rounded-lg shadow-lg animate-fade-in max-w-4xl mx-auto"
-      >
-        {grid.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex gap-0 justify-center">
-            {row.map((cell, colIndex) => (
-              <div 
-                key={`${rowIndex}-${colIndex}`} 
-                className={`
-                  relative border border-gray-900
-                  ${!cell.letter ? 'bg-gray-900' : 'bg-white'}
-                `}
-                style={{
-                  width: '60px',
-                  height: '60px'
-                }}
-              >
-                {cell.letter && (
-                  <>
-                    {cell.number && (
-                      <div className="absolute top-0 left-0 w-full">
-                        <span 
-                          className="absolute top-1 left-1.5 text-sm font-bold text-gray-900 bg-white px-0.5"
-                          style={{ fontSize: '14px' }}
-                        >
-                          {cell.number}
-                        </span>
-                        <div className="absolute top-0.5 right-1 text-[10px] text-gray-500">
-                          {`R${rowIndex+1}C${colIndex+1}`}
-                        </div>
+    <div 
+      ref={gridRef} 
+      className="grid gap-0 bg-white p-8 rounded-lg shadow-lg animate-fade-in max-w-4xl mx-auto"
+    >
+      {grid.map((row, rowIndex) => (
+        <div key={rowIndex} className="flex gap-0 justify-center">
+          {row.map((cell, colIndex) => (
+            <div 
+              key={`${rowIndex}-${colIndex}`} 
+              className={`
+                relative border border-gray-900
+                ${!cell.letter ? 'bg-gray-900' : 'bg-white'}
+              `}
+              style={{
+                width: '60px',
+                height: '60px'
+              }}
+            >
+              {cell.letter && (
+                <>
+                  {cell.number && (
+                    <div className="absolute top-0 left-0 w-full">
+                      <span 
+                        className="absolute top-1 left-1.5 text-sm font-bold text-gray-900 bg-white px-0.5"
+                        style={{ fontSize: '14px' }}
+                      >
+                        {cell.number}
+                      </span>
+                      <div className="absolute top-0.5 right-1 text-[10px] text-gray-500">
+                        {`R${rowIndex+1}C${colIndex+1}`}
                       </div>
-                    )}
-                    <div className="relative h-full">
-                      <input
-                        type="text"
-                        maxLength={1}
-                        className={`
-                          w-full h-full text-center text-2xl font-bold pt-3
-                          focus:outline-none focus:bg-blue-50
-                          ${cell.isActive ? "bg-blue-50" : "bg-white"}
-                          ${cell.isHighlighted ? "bg-yellow-50" : ""}
-                          ${cell.isPartialHint ? "bg-gray-50" : ""}
-                          ${showAnswer ? "text-green-600" : 
-                            !isInputCorrect(rowIndex, colIndex) ? "text-red-600" :
-                            !cell.isRevealed && !cell.isPartialHint ? "text-blue-600" : "text-black"}
-                          uppercase
-                        `}
-                        style={{
-                          border: 'none',
-                          caretColor: 'transparent'
-                        }}
-                        value={
-                          showAnswer ? cell.letter :
-                          cell.isRevealed || cell.isPartialHint 
-                            ? cell.letter 
-                            : userInputs[`${rowIndex}-${colIndex}`] || ""
-                        }
-                        onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
-                        onClick={() => onCellClick(rowIndex, colIndex)}
-                        onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
-                        data-row={rowIndex}
-                        data-col={colIndex}
-                        readOnly={cell.isRevealed || cell.isPartialHint || showAnswer}
-                      />
-                      {!cell.isRevealed && !cell.isPartialHint && cell.letter && !showAnswer && (
-                        <button
-                          onClick={() => onHintRequest(rowIndex, colIndex)}
-                          className="absolute -right-7 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"
-                          title="Get hint"
-                        >
-                          ?
-                        </button>
-                      )}
                     </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={toggleAnswer}
-        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-      >
-        {showAnswer ? "Hide Answer" : "Show Answer"}
-      </button>
+                  )}
+                  <div className="relative h-full">
+                    <input
+                      type="text"
+                      maxLength={1}
+                      className={`
+                        w-full h-full text-center text-2xl font-bold pt-3
+                        focus:outline-none focus:bg-blue-50
+                        ${cell.isActive ? "bg-blue-50" : "bg-white"}
+                        ${cell.isHighlighted ? "bg-yellow-50" : ""}
+                        ${cell.isPartialHint ? "bg-gray-50" : ""}
+                        ${!cell.isRevealed && !cell.isPartialHint ? "text-blue-600" : "text-black"}
+                        uppercase
+                      `}
+                      style={{
+                        border: 'none',
+                        caretColor: 'transparent'
+                      }}
+                      value={
+                        cell.isRevealed || cell.isPartialHint 
+                          ? cell.letter 
+                          : userInputs[`${rowIndex}-${colIndex}`] || ""
+                      }
+                      onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
+                      onClick={() => onCellClick(rowIndex, colIndex)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
+                      data-row={rowIndex}
+                      data-col={colIndex}
+                      readOnly={cell.isRevealed || cell.isPartialHint}
+                    />
+                    {!cell.isRevealed && !cell.isPartialHint && cell.letter && (
+                      <button
+                        onClick={() => onHintRequest(rowIndex, colIndex)}
+                        className="absolute -right-7 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"
+                        title="Get hint"
+                      >
+                        ?
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 };
