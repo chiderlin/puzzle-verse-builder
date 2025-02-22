@@ -13,41 +13,41 @@ export const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchLeaderboard = async () => {
-    try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, total_score, email, display_name')
-        .order('total_score', { ascending: false })
-        .limit(10);
-
-      if (profilesError) throw profilesError;
-
-      // Format display names from emails if not already set
-      const leaderboardWithDisplayNames = profiles.map((profile) => {
-        if (!profile.display_name && profile.email) {
-          const username = profile.email.split('@')[0];
-          return {
-            ...profile,
-            display_name: username
-          };
-        }
-        return profile;
-      });
-
-      setLeaderboard(leaderboardWithDisplayNames);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, total_score, email, display_name')
+          .order('total_score', { ascending: false })
+          .limit(10);
+
+        if (profilesError) throw profilesError;
+
+        // Format display names from emails if not already set
+        const leaderboardWithDisplayNames = profiles.map((profile) => {
+          if (!profile.display_name && profile.email) {
+            const username = profile.email.split('@')[0]; // Get the part before @
+            return {
+              ...profile,
+              display_name: username
+            };
+          }
+          return profile;
+        });
+
+        setLeaderboard(leaderboardWithDisplayNames);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchLeaderboard();
 
-    // Subscribe to changes in both profiles and puzzle_progress tables
-    const profilesChannel = supabase
+    // Subscribe to changes in the profiles table
+    const channel = supabase
       .channel('profiles-changes')
       .on('postgres_changes', 
         { 
@@ -55,32 +55,14 @@ export const Leaderboard = () => {
           schema: 'public', 
           table: 'profiles' 
         }, 
-        (payload) => {
-          console.log('Profile update received:', payload);
-          fetchLeaderboard();
-        }
-      )
-      .subscribe();
-
-    const puzzleChannel = supabase
-      .channel('puzzle-changes')
-      .on('postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'puzzle_progress',
-          filter: 'submitted=true'
-        },
-        (payload) => {
-          console.log('New puzzle submission received:', payload);
+        () => {
           fetchLeaderboard();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(profilesChannel);
-      supabase.removeChannel(puzzleChannel);
+      supabase.removeChannel(channel);
     };
   }, []);
 
