@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -105,12 +106,14 @@ const Index = () => {
       }
 
       if (progress?.grid_state) {
-        const loadedGrid = progress.grid_state as GridCell[][];
-        setGrid(loadedGrid);
-        toast({
-          title: "Progress Loaded",
-          description: "Your previous game progress has been restored.",
-        });
+        const loadedGrid = progress.grid_state as unknown as GridCell[][];
+        if (Array.isArray(loadedGrid) && loadedGrid.length > 0) {
+          setGrid(loadedGrid);
+          toast({
+            title: "Progress Loaded",
+            description: "Your previous game progress has been restored.",
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading progress:', error);
@@ -144,7 +147,7 @@ const Index = () => {
         await supabase
           .from('puzzle_progress')
           .update({
-            grid_state: grid,
+            grid_state: grid as unknown as Json,
             last_updated: new Date().toISOString(),
           })
           .eq('id', existingProgress.id);
@@ -152,7 +155,7 @@ const Index = () => {
         await supabase
           .from('puzzle_progress')
           .insert({
-            grid_state: grid,
+            grid_state: grid as unknown as Json,
             user_id: (await supabase.auth.getUser()).data.user?.id,
           });
       }
@@ -172,6 +175,31 @@ const Index = () => {
       setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadSavedProgress().then(() => {
+        if (!grid.length) {
+          generateNewPuzzle();
+        }
+      });
+    }
+  }, [isAuthenticated]);
 
   const generateNewPuzzle = async () => {
     try {
@@ -408,31 +436,6 @@ const Index = () => {
   const handleClueClick = (direction: "across" | "down", number: number) => {
     setActiveClue({ direction, number });
   };
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadSavedProgress().then(() => {
-        if (!grid.length) {
-          generateNewPuzzle();
-        }
-      });
-    }
-  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
