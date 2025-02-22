@@ -52,13 +52,9 @@ export const CrosswordGrid = ({
 
     switch (e.key) {
       case "Backspace":
-        if (currentInput.value === "") {
+      case "Delete":
+        if (currentInput.value === "" && e.key === "Backspace") {
           e.preventDefault();
-          setUserInputs(prev => ({
-            ...prev,
-            [`${row}-${col}`]: ""
-          }));
-          onCellChange(row, col, "");
           const prevInput = gridRef.current?.querySelector(
             `input[data-row="${row}"][data-col="${col - 1}"]`
           ) as HTMLInputElement;
@@ -66,6 +62,11 @@ export const CrosswordGrid = ({
             prevInput.focus();
           }
         }
+        setUserInputs(prev => ({
+          ...prev,
+          [`${row}-${col}`]: ""
+        }));
+        onCellChange(row, col, "");
         break;
       case "ArrowLeft":
         e.preventDefault();
@@ -137,9 +138,10 @@ export const CrosswordGrid = ({
               key={`${rowIndex}-${colIndex}`} 
               className={`
                 relative aspect-square
-                ${cell.letter ? 'bg-white' : 'bg-gray-900'}
+                bg-white
                 ${cell.isActive ? 'ring-2 ring-blue-500' : ''}
                 ${cell.isHighlighted ? 'bg-yellow-50' : ''}
+                ${!cell.letter ? 'hidden' : ''}
               `}
             >
               {cell.letter && (
