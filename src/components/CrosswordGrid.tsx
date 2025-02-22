@@ -186,8 +186,7 @@ export const CrosswordGrid = ({
                       ${cell.isActive ? "bg-blue-50" : "bg-white"}
                       ${cell.isHighlighted ? "bg-yellow-50" : ""}
                       ${cell.isPartialHint ? "bg-gray-50" : ""}
-                      ${cell.isRevealed ? "text-green-600" : 
-                        cell.isPartialHint ? (cell.isRevealed ? "text-green-600" : "text-gray-900") :
+                      ${(cell.isRevealed && !cell.isPartialHint) ? "text-green-600" : 
                         userInputs[`${rowIndex}-${colIndex}`] ? "text-blue-600" : "text-gray-900"
                       }
                       uppercase
