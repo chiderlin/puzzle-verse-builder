@@ -29,7 +29,6 @@ export const CrosswordGrid = ({
     if (value.length <= 1 && /^[A-Za-z]$/.test(value) || value === "") {
       onCellChange(row, col, value.toUpperCase());
       
-      // Auto-advance to next cell if a letter was entered
       if (value) {
         const nextInput = gridRef.current?.querySelector(
           `input[data-row="${row}"][data-col="${col + 1}"]`
@@ -49,7 +48,6 @@ export const CrosswordGrid = ({
         if (currentInput.value === "") {
           e.preventDefault();
           onCellChange(row, col, "");
-          // Move to previous cell
           const prevInput = gridRef.current?.querySelector(
             `input[data-row="${row}"][data-col="${col - 1}"]`
           ) as HTMLInputElement;
@@ -98,21 +96,50 @@ export const CrosswordGrid = ({
   };
 
   return (
-    <div ref={gridRef} className="grid gap-px bg-slate-200 p-px rounded-lg shadow-lg animate-fade-in">
+    <div 
+      ref={gridRef} 
+      className="grid gap-[1px] bg-gray-300 p-4 rounded-lg shadow-lg animate-fade-in max-w-3xl mx-auto"
+      style={{
+        border: '2px solid #333',
+        backgroundColor: '#fff'
+      }}
+    >
       {grid.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex">
+        <div key={rowIndex} className="flex gap-[1px]">
           {row.map((cell, colIndex) => (
-            <div key={`${rowIndex}-${colIndex}`} className="relative">
+            <div 
+              key={`${rowIndex}-${colIndex}`} 
+              className="relative bg-white"
+              style={{
+                width: '40px',
+                height: '40px',
+                border: '1px solid #333'
+              }}
+            >
               {cell.number && (
-                <span className="crossword-cell-number">{cell.number}</span>
+                <span 
+                  className="absolute top-0 left-1 text-xs font-medium text-gray-600"
+                  style={{ fontSize: '10px' }}
+                >
+                  {cell.number}
+                </span>
               )}
-              <div className="relative">
+              <div className="relative h-full">
                 <input
                   type="text"
                   maxLength={1}
-                  className={`crossword-cell ${cell.isActive ? "active" : ""} ${
-                    cell.isHighlighted ? "highlighted" : ""
-                  } ${cell.isPartialHint ? "bg-slate-100" : ""}`}
+                  className={`
+                    w-full h-full text-center text-lg font-medium 
+                    focus:outline-none focus:ring-2 focus:ring-blue-400
+                    ${cell.isActive ? "bg-blue-50" : "bg-white"}
+                    ${cell.isHighlighted ? "bg-yellow-50" : ""}
+                    ${cell.isPartialHint ? "bg-gray-50" : ""}
+                    uppercase
+                  `}
+                  style={{
+                    border: 'none',
+                    caretColor: 'transparent'
+                  }}
                   value={cell.isRevealed || cell.isPartialHint ? cell.letter : ""}
                   onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
                   onClick={() => onCellClick(rowIndex, colIndex)}
