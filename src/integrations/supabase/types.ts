@@ -16,6 +16,8 @@ export type Database = {
           grid_state: Json
           id: string
           last_updated: string
+          score: number | null
+          submitted: boolean | null
           user_id: string
         }
         Insert: {
@@ -24,6 +26,8 @@ export type Database = {
           grid_state: Json
           id?: string
           last_updated?: string
+          score?: number | null
+          submitted?: boolean | null
           user_id: string
         }
         Update: {
@@ -32,6 +36,8 @@ export type Database = {
           grid_state?: Json
           id?: string
           last_updated?: string
+          score?: number | null
+          submitted?: boolean | null
           user_id?: string
         }
         Relationships: []
