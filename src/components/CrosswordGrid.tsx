@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 
 interface CrosswordCell {
@@ -114,7 +115,7 @@ export const CrosswordGrid = ({
             alt="Crown" 
             className="w-16 h-16"
           />
-          <h1 className="text-4xl font-black tracking-tight">FAIRY TALES</h1>
+          <h1 className="text-4xl font-black tracking-tight">CROSSWORD PUZZLE</h1>
           <img 
             src="/lovable-uploads/c6fa1836-b744-4791-a522-0d9aff5c5f6b.png" 
             alt="Castle" 
