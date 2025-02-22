@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -14,6 +13,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [totalScore, setTotalScore] = useState(0);
   const { toast } = useToast();
   const {
     puzzle,
@@ -29,16 +29,37 @@ const Index = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
       setIsLoading(false);
+      if (session?.user) {
+        fetchTotalScore(session.user.id);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
+      if (session?.user) {
+        fetchTotalScore(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchTotalScore = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('total_score')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setTotalScore(data.total_score);
+    } catch (error) {
+      console.error('Error fetching total score:', error);
+    }
+  };
 
   const handleHintRequest = (row: number, col: number) => {
     const newGrid = [...grid];
@@ -129,43 +150,24 @@ const Index = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user?.id) throw new Error('User not found');
 
-      const { data: existingProgress } = await supabase
+      const { error: submitError } = await supabase
         .from('puzzle_progress')
-        .select('id')
-        .eq('user_id', user.user.id)
-        .maybeSingle();
+        .insert({
+          grid_state: grid as unknown as Json,
+          user_id: user.user.id,
+          score: score,
+          submitted: true,
+          completed_at: new Date().toISOString()
+        });
 
-      if (existingProgress) {
-        const { error } = await supabase
-          .from('puzzle_progress')
-          .update({
-            grid_state: grid as unknown as Json,
-            score: score,
-            submitted: true,
-            last_updated: new Date().toISOString(),
-            completed_at: new Date().toISOString()
-          })
-          .eq('id', existingProgress.id);
+      if (submitError) throw submitError;
 
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('puzzle_progress')
-          .insert({
-            grid_state: grid as unknown as Json,
-            user_id: user.user.id,
-            score: score,
-            submitted: true,
-            completed_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-      }
-
+      await fetchTotalScore(user.user.id);
+      
       setIsSubmitted(true);
       toast({
         title: "Puzzle Submitted Successfully!",
-        description: `Your final score: ${score} points out of ${totalCells * 5} possible points`,
+        description: `Your score: ${score} points out of ${totalCells * 5} possible points. Total career score: ${totalScore + score} points`,
       });
     } catch (error) {
       console.error('Error submitting puzzle:', error);
@@ -206,6 +208,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-4">
+          <p className="text-lg font-semibold text-slate-700">Total Career Score: {totalScore} points</p>
+        </div>
         <PuzzleControls
           onSignOut={() => supabase.auth.signOut()}
           onGenerateNew={generateNewPuzzle}
