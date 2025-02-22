@@ -117,12 +117,17 @@ export const CrosswordGrid = ({
               {cell.letter && (
                 <>
                   {cell.number && (
-                    <span 
-                      className="absolute top-1 left-1.5 text-sm font-bold text-gray-900"
-                      style={{ fontSize: '14px' }}
-                    >
-                      {cell.number}
-                    </span>
+                    <div className="absolute top-0 left-0 w-full">
+                      <span 
+                        className="absolute top-1 left-1.5 text-sm font-bold text-gray-900 bg-white px-0.5"
+                        style={{ fontSize: '14px' }}
+                      >
+                        {cell.number}
+                      </span>
+                      <div className="absolute top-0.5 right-1 text-[10px] text-gray-500">
+                        {`R${rowIndex+1}C${colIndex+1}`}
+                      </div>
+                    </div>
                   )}
                   <div className="relative h-full">
                     <input
