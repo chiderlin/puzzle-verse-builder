@@ -165,15 +165,13 @@ const Index = () => {
 
       const { error: submitError } = await supabase
         .from('puzzle_progress')
-        .update({
+        .insert({
           grid_state: grid as unknown as Json,
           user_id: user.user.id,
           score: score,
           submitted: true,
           completed_at: new Date().toISOString()
-        })
-        .eq('user_id', user.user.id)
-        .eq('submitted', false);
+        });
 
       if (submitError) throw submitError;
 
