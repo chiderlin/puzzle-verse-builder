@@ -11,30 +11,17 @@ type LeaderboardEntry = {
 export const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        console.log("Fetching leaderboard data...");
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, total_score, display_name')
           .order('total_score', { ascending: false })
           .limit(10);
 
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-          setError(profilesError.message);
-          throw profilesError;
-        }
-
-        console.log("Received profiles:", profiles);
-
-        if (!profiles) {
-          setLeaderboard([]);
-          return;
-        }
+        if (profilesError) throw profilesError;
 
         // Format display names, using "Anonymous Player #ID" for null display_names
         const formattedLeaderboard = profiles.map((profile) => ({
@@ -42,11 +29,9 @@ export const Leaderboard = () => {
           display_name: profile.display_name || `Anonymous Player #${profile.id.slice(0, 4)}`
         }));
 
-        console.log("Formatted leaderboard:", formattedLeaderboard);
         setLeaderboard(formattedLeaderboard);
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
-        setError(error instanceof Error ? error.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
@@ -64,7 +49,6 @@ export const Leaderboard = () => {
           table: 'profiles' 
         }, 
         () => {
-          console.log("Profiles table changed, refetching...");
           fetchLeaderboard();
         }
       )
@@ -75,25 +59,15 @@ export const Leaderboard = () => {
     };
   }, []);
 
-  if (error) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="text-red-600">Error loading leaderboard: {error}</div>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-slate-900 mb-4">Top 10 Gamers</h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-4">Top 10 Gamer</h2>
       {loading ? (
         <div className="animate-pulse space-y-3">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-12 bg-slate-100 rounded"></div>
           ))}
         </div>
-      ) : leaderboard.length === 0 ? (
-        <div className="text-slate-600">No players found</div>
       ) : (
         <div className="space-y-3">
           {leaderboard.map((entry, index) => (
