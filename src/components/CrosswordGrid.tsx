@@ -167,20 +167,14 @@ export const CrosswordGrid = ({
                       ${cell.isActive ? "bg-blue-50" : "bg-white"}
                       ${cell.isHighlighted ? "bg-yellow-50" : ""}
                       ${cell.isPartialHint ? "bg-gray-50" : ""}
-                      ${cell.isRevealed && !userInputs[`${rowIndex}-${colIndex}`] ? "text-green-600" : ""}
-                      ${!cell.isRevealed && !userInputs[`${rowIndex}-${colIndex}`] ? "text-gray-900" : ""}
-                      ${userInputs[`${rowIndex}-${colIndex}`] ? "text-blue-600" : ""}
+                      ${cell.isRevealed ? "text-green-600" : userInputs[`${rowIndex}-${colIndex}`] ? "text-blue-600" : "text-gray-900"}
                       uppercase
                     `}
                     style={{
                       border: 'none',
                       caretColor: 'transparent'
                     }}
-                    value={
-                      cell.isRevealed || cell.isPartialHint 
-                        ? cell.letter 
-                        : userInputs[`${rowIndex}-${colIndex}`] || ""
-                    }
+                    value={cell.isRevealed ? cell.letter : (cell.isPartialHint ? cell.letter : userInputs[`${rowIndex}-${colIndex}`] || "")}
                     onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
                     onClick={() => onCellClick(rowIndex, colIndex)}
                     onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
