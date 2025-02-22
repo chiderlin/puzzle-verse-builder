@@ -137,7 +137,7 @@ export const CrosswordGrid = ({
               key={`${rowIndex}-${colIndex}`} 
               className={`
                 relative aspect-square
-                ${!cell.letter ? 'bg-gray-900' : 'bg-white'}
+                ${cell.letter ? 'bg-white' : 'bg-gray-900'}
                 ${cell.isActive ? 'ring-2 ring-blue-500' : ''}
                 ${cell.isHighlighted ? 'bg-yellow-50' : ''}
               `}
