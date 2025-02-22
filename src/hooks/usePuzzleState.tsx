@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +61,8 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  
+  // Initialize grid with userCurrentValue: "" for every cell
   const [grid, setGrid] = useState<GridCell[][]>(
     defaultPuzzle.grid.map((row) =>
       row.map((cell) => ({
@@ -67,6 +70,7 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
         isActive: false,
         isHighlighted: false,
         isRevealed: false,
+        userCurrentValue: "", // Initialize empty for all cells
       }))
     )
   );
@@ -81,16 +85,23 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
         .single();
 
       if (error) {
-        if (error.code !== 'PGRST116') {
+        if (error.code !== 'PGRST116') { // No data found
           throw error;
         }
         return;
       }
 
       if (progress?.grid_state) {
-        const loadedGrid = progress.grid_state as unknown as GridCell[][];
+        const loadedGrid = progress.grid_state as GridCell[][];
         if (Array.isArray(loadedGrid) && loadedGrid.length > 0) {
-          setGrid(loadedGrid);
+          // Ensure each cell has userCurrentValue, even if it's empty
+          const processedGrid = loadedGrid.map(row =>
+            row.map(cell => ({
+              ...cell,
+              userCurrentValue: cell.userCurrentValue || ""
+            }))
+          );
+          setGrid(processedGrid);
           toast({
             title: "Progress Loaded",
             description: "Your previous game progress has been restored.",
