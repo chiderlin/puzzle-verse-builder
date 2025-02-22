@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -38,6 +37,7 @@ const Index = () => {
         ...cell,
         isActive: false,
         isHighlighted: false,
+        isRevealed: Math.random() < 0.3, // Randomly reveal 30% of cells initially
       }))
     )
   );
@@ -59,6 +59,7 @@ const Index = () => {
             ...cell,
             isActive: false,
             isHighlighted: false,
+            isRevealed: Math.random() < 0.3, // Randomly reveal 30% of cells
           }))
         )
       );
@@ -75,6 +76,19 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleHintRequest = (row: number, col: number) => {
+    const newGrid = [...grid];
+    newGrid[row][col] = {
+      ...newGrid[row][col],
+      isRevealed: true,
+    };
+    setGrid(newGrid);
+    toast({
+      title: "Hint Revealed",
+      description: `The letter at position (${row + 1}, ${col + 1}) is "${grid[row][col].letter}"`,
+    });
   };
 
   useEffect(() => {
@@ -126,7 +140,7 @@ const Index = () => {
       r.map((cell, colIndex) => ({
         ...cell,
         isActive: row === rowIndex && col === colIndex,
-        isHighlighted: false, // Reset highlighting
+        isHighlighted: false,
       }))
     );
     setGrid(newGrid);
@@ -143,7 +157,6 @@ const Index = () => {
 
   const handleClueClick = (direction: "across" | "down", number: number) => {
     setActiveClue({ direction, number });
-    // Here you would also highlight relevant cells
   };
 
   if (isLoading) {
@@ -200,6 +213,7 @@ const Index = () => {
                 grid={grid}
                 onCellClick={handleCellClick}
                 onCellChange={handleCellChange}
+                onHintRequest={handleHintRequest}
               />
             </div>
           </div>

@@ -6,15 +6,22 @@ interface CrosswordCell {
   number?: number;
   isActive: boolean;
   isHighlighted: boolean;
+  isRevealed?: boolean; // New property to track if the letter is revealed
 }
 
 interface CrosswordGridProps {
   grid: CrosswordCell[][];
   onCellClick: (row: number, col: number) => void;
   onCellChange: (row: number, col: number, value: string) => void;
+  onHintRequest: (row: number, col: number) => void; // New prop for hint functionality
 }
 
-export const CrosswordGrid = ({ grid, onCellClick, onCellChange }: CrosswordGridProps) => {
+export const CrosswordGrid = ({ 
+  grid, 
+  onCellClick, 
+  onCellChange,
+  onHintRequest 
+}: CrosswordGridProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
 
   const handleCellInput = (row: number, col: number, value: string) => {
@@ -44,19 +51,30 @@ export const CrosswordGrid = ({ grid, onCellClick, onCellChange }: CrosswordGrid
               {cell.number && (
                 <span className="crossword-cell-number">{cell.number}</span>
               )}
-              <input
-                type="text"
-                maxLength={1}
-                className={`crossword-cell ${cell.isActive ? "active" : ""} ${
-                  cell.isHighlighted ? "highlighted" : ""
-                }`}
-                value={cell.letter}
-                onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
-                onClick={() => onCellClick(rowIndex, colIndex)}
-                onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
-                data-row={rowIndex}
-                data-col={colIndex}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  maxLength={1}
+                  className={`crossword-cell ${cell.isActive ? "active" : ""} ${
+                    cell.isHighlighted ? "highlighted" : ""
+                  }`}
+                  value={cell.isRevealed ? cell.letter : ""}
+                  onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
+                  onClick={() => onCellClick(rowIndex, colIndex)}
+                  onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
+                  data-row={rowIndex}
+                  data-col={colIndex}
+                />
+                {!cell.isRevealed && cell.letter && (
+                  <button
+                    onClick={() => onHintRequest(rowIndex, colIndex)}
+                    className="absolute -right-6 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"
+                    title="Get hint"
+                  >
+                    ?
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
