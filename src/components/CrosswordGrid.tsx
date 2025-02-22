@@ -107,84 +107,100 @@ export const CrosswordGrid = ({
   };
 
   return (
-    <div 
-      ref={gridRef} 
-      className="grid gap-0 bg-white p-8 rounded-lg shadow-lg animate-fade-in max-w-4xl mx-auto"
-    >
-      {grid.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex gap-0 justify-center">
-          {row.map((cell, colIndex) => (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="text-center mb-8 space-y-2">
+        <div className="flex justify-center gap-8 items-center">
+          <img 
+            src="/lovable-uploads/c6fa1836-b744-4791-a522-0d9aff5c5f6b.png" 
+            alt="Crown" 
+            className="w-16 h-16"
+          />
+          <h1 className="text-4xl font-black tracking-tight">FAIRY TALES</h1>
+          <img 
+            src="/lovable-uploads/c6fa1836-b744-4791-a522-0d9aff5c5f6b.png" 
+            alt="Castle" 
+            className="w-16 h-16"
+          />
+        </div>
+        <p className="text-xl font-medium text-gray-600">CROSSWORD PUZZLE</p>
+      </div>
+
+      <div 
+        ref={gridRef} 
+        className="grid gap-px bg-gray-900 p-0.5 rounded-lg shadow-xl max-w-4xl mx-auto"
+        style={{
+          gridTemplateColumns: `repeat(${grid[0]?.length || 0}, minmax(0, 1fr))`
+        }}
+      >
+        {grid.map((row, rowIndex) => (
+          row.map((cell, colIndex) => (
             <div 
               key={`${rowIndex}-${colIndex}`} 
               className={`
-                relative border border-gray-900
+                relative aspect-square
                 ${!cell.letter ? 'bg-gray-900' : 'bg-white'}
+                ${cell.isActive ? 'ring-2 ring-blue-500' : ''}
+                ${cell.isHighlighted ? 'bg-yellow-50' : ''}
               `}
-              style={{
-                width: '60px',
-                height: '60px'
-              }}
             >
               {cell.letter && (
                 <>
                   {cell.number && (
-                    <div className="absolute top-0 left-0 w-full">
-                      <span 
-                        className="absolute top-1 left-1.5 text-sm font-bold text-gray-900 bg-white px-0.5"
-                        style={{ fontSize: '14px' }}
-                      >
-                        {cell.number}
-                      </span>
-                      <div className="absolute top-0.5 right-1 text-[10px] text-gray-500">
-                        {`R${rowIndex+1}C${colIndex+1}`}
-                      </div>
-                    </div>
+                    <span 
+                      className="absolute top-0.5 left-1 text-xs font-bold text-gray-900"
+                    >
+                      {cell.number}
+                    </span>
                   )}
-                  <div className="relative h-full">
-                    <input
-                      type="text"
-                      maxLength={1}
-                      className={`
-                        w-full h-full text-center text-2xl font-bold pt-3
-                        focus:outline-none focus:bg-blue-50
-                        ${cell.isActive ? "bg-blue-50" : "bg-white"}
-                        ${cell.isHighlighted ? "bg-yellow-50" : ""}
-                        ${cell.isPartialHint ? "bg-gray-50" : ""}
-                        ${!cell.isRevealed && !cell.isPartialHint ? "text-blue-600" : "text-black"}
-                        uppercase
-                      `}
-                      style={{
-                        border: 'none',
-                        caretColor: 'transparent'
-                      }}
-                      value={
-                        cell.isRevealed || cell.isPartialHint 
-                          ? cell.letter 
-                          : userInputs[`${rowIndex}-${colIndex}`] || ""
-                      }
-                      onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
-                      onClick={() => onCellClick(rowIndex, colIndex)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
-                      data-row={rowIndex}
-                      data-col={colIndex}
-                      readOnly={cell.isRevealed || cell.isPartialHint}
-                    />
-                    {!cell.isRevealed && !cell.isPartialHint && cell.letter && (
-                      <button
-                        onClick={() => onHintRequest(rowIndex, colIndex)}
-                        className="absolute -right-7 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"
-                        title="Get hint"
-                      >
-                        ?
-                      </button>
-                    )}
-                  </div>
+                  <input
+                    type="text"
+                    maxLength={1}
+                    className={`
+                      w-full h-full text-center text-lg font-bold
+                      focus:outline-none focus:bg-blue-50
+                      ${cell.isActive ? "bg-blue-50" : "bg-white"}
+                      ${cell.isHighlighted ? "bg-yellow-50" : ""}
+                      ${cell.isPartialHint ? "bg-gray-50" : ""}
+                      ${!cell.isRevealed && !cell.isPartialHint ? "text-blue-600" : "text-black"}
+                      uppercase
+                    `}
+                    style={{
+                      border: 'none',
+                      caretColor: 'transparent'
+                    }}
+                    value={
+                      cell.isRevealed || cell.isPartialHint 
+                        ? cell.letter 
+                        : userInputs[`${rowIndex}-${colIndex}`] || ""
+                    }
+                    onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
+                    onClick={() => onCellClick(rowIndex, colIndex)}
+                    onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
+                    data-row={rowIndex}
+                    data-col={colIndex}
+                    readOnly={cell.isRevealed || cell.isPartialHint}
+                  />
                 </>
               )}
             </div>
-          ))}
+          ))
+        ))}
+      </div>
+
+      <div className="mt-12 grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+        <div>
+          <h2 className="font-bold text-xl mb-4 border-b pb-2">ACROSS</h2>
+          <div className="space-y-2 text-sm">
+            {/* Clues will be rendered here */}
+          </div>
         </div>
-      ))}
+        <div>
+          <h2 className="font-bold text-xl mb-4 border-b pb-2">DOWN</h2>
+          <div className="space-y-2 text-sm">
+            {/* Clues will be rendered here */}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
