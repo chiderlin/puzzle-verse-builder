@@ -161,7 +161,7 @@ export const CrosswordGrid = ({
                       ${cell.isActive ? "bg-blue-50" : "bg-white"}
                       ${cell.isHighlighted ? "bg-yellow-50" : ""}
                       ${cell.isPartialHint ? "bg-gray-50" : ""}
-                      ${!cell.isRevealed && !cell.isPartialHint ? "text-blue-600" : "text-black"}
+                      ${cell.isRevealed ? "text-green-600" : "text-blue-600"}
                       uppercase
                     `}
                     style={{
