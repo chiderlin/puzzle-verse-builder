@@ -61,7 +61,7 @@ export const Leaderboard = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-slate-900 mb-4">Leaderboard</h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-4">Top 10 Gamer</h2>
       {loading ? (
         <div className="animate-pulse space-y-3">
           {[...Array(5)].map((_, i) => (
