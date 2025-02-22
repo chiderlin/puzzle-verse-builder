@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -95,7 +96,8 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
           );
           setGrid(processedGrid);
           
-          if (progress.submitted) {
+          // Check if submitted exists in the progress object before accessing it
+          if (progress.hasOwnProperty('submitted') && progress.submitted) {
             toast({
               title: "Puzzle Already Submitted",
               description: "This puzzle has already been completed and submitted.",

@@ -6,6 +6,7 @@ import { PuzzleControls } from "@/components/PuzzleControls";
 import { usePuzzleState } from "@/hooks/usePuzzleState";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
