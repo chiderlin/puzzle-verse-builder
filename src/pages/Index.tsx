@@ -51,8 +51,8 @@ const Index = () => {
     const newGrid = grid.map((row, rowIndex) =>
       row.map((cell, colIndex) => ({
         ...cell,
-        isRevealed: cell.letter !== "",
-        isPartialHint: false
+        isRevealed: cell.letter !== ""
+        // Note: We no longer modify isPartialHint here
       }))
     );
     setGrid(newGrid);
