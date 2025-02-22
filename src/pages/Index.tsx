@@ -58,6 +58,15 @@ const defaultPuzzle = {
   ],
 };
 
+interface GridCell {
+  letter: string;
+  number: number | null;
+  isActive: boolean;
+  isHighlighted: boolean;
+  isRevealed: boolean;
+  isPartialHint?: boolean;
+}
+
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,8 +75,9 @@ const Index = () => {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [puzzle, setPuzzle] = useState(defaultPuzzle);
   const { toast } = useToast();
+  const [activeClue, setActiveClue] = useState<{ direction: "across" | "down"; number: number } | null>(null);
   
-  const [grid, setGrid] = useState(
+  const [grid, setGrid] = useState<GridCell[][]>(
     defaultPuzzle.grid.map((row) =>
       row.map((cell) => ({
         ...cell,
@@ -95,7 +105,8 @@ const Index = () => {
       }
 
       if (progress?.grid_state) {
-        setGrid(progress.grid_state);
+        const loadedGrid = progress.grid_state as GridCell[][];
+        setGrid(loadedGrid);
         toast({
           title: "Progress Loaded",
           description: "Your previous game progress has been restored.",
@@ -130,7 +141,6 @@ const Index = () => {
         .single();
 
       if (existingProgress) {
-        // Update existing progress
         await supabase
           .from('puzzle_progress')
           .update({
@@ -139,7 +149,6 @@ const Index = () => {
           })
           .eq('id', existingProgress.id);
       } else {
-        // Insert new progress
         await supabase
           .from('puzzle_progress')
           .insert({
