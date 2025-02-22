@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -6,11 +5,13 @@ import { AuthForm } from "@/components/AuthForm";
 import { PuzzleControls } from "@/components/PuzzleControls";
 import { usePuzzleState } from "@/hooks/usePuzzleState";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const { toast } = useToast();
   const {
     puzzle,
     grid,
@@ -43,6 +44,20 @@ const Index = () => {
       isRevealed: true,
     };
     setGrid(newGrid);
+  };
+
+  const handleRevealAnswer = () => {
+    const newGrid = grid.map((row, rowIndex) =>
+      row.map((cell, colIndex) => ({
+        ...cell,
+        isRevealed: cell.letter !== ""
+      }))
+    );
+    setGrid(newGrid);
+    toast({
+      title: "Answers Revealed",
+      description: "All puzzle answers have been revealed.",
+    });
   };
 
   const handleAuth = async (email: string, password: string) => {
@@ -111,6 +126,7 @@ const Index = () => {
           onSignOut={() => supabase.auth.signOut()}
           onGenerateNew={generateNewPuzzle}
           onSaveProgress={saveProgress}
+          onRevealAnswer={handleRevealAnswer}
           isGenerating={isGenerating}
           isSaving={isSaving}
         />

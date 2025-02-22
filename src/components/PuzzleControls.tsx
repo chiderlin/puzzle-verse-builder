@@ -1,11 +1,12 @@
 
 import { Button } from "@/components/ui/button";
-import { SaveIcon } from "lucide-react";
+import { SaveIcon, EyeIcon } from "lucide-react";
 
 interface PuzzleControlsProps {
   onSignOut: () => void;
   onGenerateNew: () => void;
   onSaveProgress: () => void;
+  onRevealAnswer: () => void;
   isGenerating: boolean;
   isSaving: boolean;
 }
@@ -14,6 +15,7 @@ export const PuzzleControls = ({
   onSignOut,
   onGenerateNew,
   onSaveProgress,
+  onRevealAnswer,
   isGenerating,
   isSaving
 }: PuzzleControlsProps) => {
@@ -48,6 +50,14 @@ export const PuzzleControls = ({
         >
           <SaveIcon className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Progress"}
+        </Button>
+        <Button
+          onClick={onRevealAnswer}
+          variant="secondary"
+          className="flex items-center gap-2"
+        >
+          <EyeIcon className="h-4 w-4" />
+          Show Answer
         </Button>
       </div>
     </div>
