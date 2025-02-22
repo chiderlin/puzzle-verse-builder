@@ -19,7 +19,8 @@ export const Leaderboard = () => {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, total_score, display_name')
-          .order('total_score', { ascending: false });
+          .order('total_score', { ascending: false })
+          .limit(10);  // Added back the limit(10)
 
         if (profilesError) {
           console.error('Profiles error:', profilesError);
