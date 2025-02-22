@@ -124,9 +124,6 @@ export const CrosswordGrid = ({
                       >
                         {cell.number}
                       </span>
-                      <div className="absolute top-0.5 right-1 text-[10px] text-gray-500">
-                        {`R${rowIndex+1}C${colIndex+1}`}
-                      </div>
                     </div>
                   )}
                   <div className="relative h-full">
@@ -138,22 +135,22 @@ export const CrosswordGrid = ({
                         focus:outline-none focus:bg-blue-50
                         ${cell.isActive ? "bg-blue-50" : "bg-white"}
                         ${cell.isHighlighted ? "bg-yellow-50" : ""}
-                        ${cell.isPartialHint ? "bg-gray-50" : ""}
+                        ${cell.isRevealed ? "text-black" : "text-blue-600"}
                         uppercase
                       `}
                       style={{
                         border: 'none',
                         caretColor: 'transparent'
                       }}
-                      value={cell.isRevealed || cell.isPartialHint ? cell.letter : ""}
+                      value={cell.isRevealed ? cell.letter : ""}
                       onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
                       onClick={() => onCellClick(rowIndex, colIndex)}
                       onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
                       data-row={rowIndex}
                       data-col={colIndex}
-                      readOnly={cell.isPartialHint}
+                      readOnly={cell.isRevealed}
                     />
-                    {!cell.isRevealed && !cell.isPartialHint && cell.letter && (
+                    {!cell.isRevealed && !cell.isPartialHint && (
                       <button
                         onClick={() => onHintRequest(rowIndex, colIndex)}
                         className="absolute -right-7 top-1/2 -translate-y-1/2 text-xs bg-blue-500 text-white p-1 rounded hover:bg-blue-600"
