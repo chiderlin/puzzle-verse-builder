@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -25,6 +26,33 @@ const Index = () => {
     saveProgress,
     generateNewPuzzle
   } = usePuzzleState(isAuthenticated);
+
+  const checkForUnsubmittedPuzzle = async (userId: string) => {
+    try {
+      const { data: unsubmittedPuzzle, error } = await supabase
+        .from('puzzle_progress')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('submitted', false)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
+        throw error;
+      }
+
+      if (!unsubmittedPuzzle) {
+        // No unsubmitted puzzle found, generate a new one
+        await generateNewPuzzle();
+      }
+    } catch (error) {
+      console.error('Error checking for unsubmitted puzzle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check puzzle status",
+        variant: "destructive"
+      });
+    }
+  };
 
   const fetchTotalScore = async (userId: string) => {
     try {
@@ -62,6 +90,7 @@ const Index = () => {
       setIsLoading(false);
       if (session?.user) {
         fetchTotalScore(session.user.id);
+        checkForUnsubmittedPuzzle(session.user.id);
       }
     });
 
@@ -69,6 +98,7 @@ const Index = () => {
       setIsAuthenticated(!!session);
       if (session?.user) {
         fetchTotalScore(session.user.id);
+        checkForUnsubmittedPuzzle(session.user.id);
       }
     });
 
