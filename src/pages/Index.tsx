@@ -7,21 +7,21 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Sample crossword data
-const samplePuzzle = {
+// Default puzzle structure
+const defaultPuzzle = {
   grid: [
     [{ letter: "", number: 1 }, { letter: "", number: 2 }, { letter: "" }],
     [{ letter: "", number: 3 }, { letter: "" }, { letter: "" }],
     [{ letter: "", number: 4 }, { letter: "" }, { letter: "" }],
   ],
   across: [
-    { number: 1, text: "First word across" },
-    { number: 3, text: "Second word across" },
-    { number: 4, text: "Third word across" },
+    { number: 1, text: "Loading..." },
+    { number: 3, text: "Loading..." },
+    { number: 4, text: "Loading..." },
   ],
   down: [
-    { number: 1, text: "First word down" },
-    { number: 2, text: "Second word down" },
+    { number: 1, text: "Loading..." },
+    { number: 2, text: "Loading..." },
   ],
 };
 
@@ -29,10 +29,11 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [puzzle, setPuzzle] = useState(defaultPuzzle);
   const { toast } = useToast();
   
   const [grid, setGrid] = useState(
-    samplePuzzle.grid.map((row) =>
+    defaultPuzzle.grid.map((row) =>
       row.map((cell) => ({
         ...cell,
         isActive: false,
@@ -44,6 +45,37 @@ const Index = () => {
   const [activeClue, setActiveClue] = useState<{ direction: "across" | "down"; number: number } | null>(
     null
   );
+
+  const generateNewPuzzle = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-crossword');
+      
+      if (error) throw error;
+
+      setPuzzle(data);
+      setGrid(
+        data.grid.map((row: any[]) =>
+          row.map((cell) => ({
+            ...cell,
+            isActive: false,
+            isHighlighted: false,
+          }))
+        )
+      );
+
+      toast({
+        title: "New Puzzle Generated",
+        description: "Start solving the new crossword puzzle!",
+      });
+    } catch (error) {
+      console.error('Error generating puzzle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate new puzzle",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     // Check initial auth state
@@ -61,6 +93,13 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    // Generate initial puzzle when authenticated
+    if (isAuthenticated) {
+      generateNewPuzzle();
+    }
+  }, [isAuthenticated]);
 
   const handleAuth = async (email: string, password: string) => {
     try {
@@ -139,13 +178,19 @@ const Index = () => {
         <div className="text-center mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Crossword Puzzle</h1>
           <p className="text-slate-600">Challenge your mind with our daily crossword</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => supabase.auth.signOut()}
-          >
-            Sign Out
-          </Button>
+          <div className="flex justify-center gap-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => supabase.auth.signOut()}
+            >
+              Sign Out
+            </Button>
+            <Button
+              onClick={generateNewPuzzle}
+            >
+              Generate New Puzzle
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -163,7 +208,7 @@ const Index = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <ClueList
                 title="Across"
-                clues={samplePuzzle.across.map((clue) => ({
+                clues={puzzle.across.map((clue) => ({
                   ...clue,
                   isActive: activeClue?.direction === "across" && activeClue.number === clue.number,
                 }))}
@@ -174,7 +219,7 @@ const Index = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <ClueList
                 title="Down"
-                clues={samplePuzzle.down.map((clue) => ({
+                clues={puzzle.down.map((clue) => ({
                   ...clue,
                   isActive: activeClue?.direction === "down" && activeClue.number === clue.number,
                 }))}
