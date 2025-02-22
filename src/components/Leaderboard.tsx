@@ -23,15 +23,23 @@ export const Leaderboard = () => {
 
         if (profilesError) throw profilesError;
 
+        // Ensure we have data and it's an array
+        if (!profiles || !Array.isArray(profiles)) {
+          setLeaderboard([]);
+          return;
+        }
+
         // Format display names, using "Anonymous Player #ID" for null display_names
         const formattedLeaderboard = profiles.map((profile) => ({
-          ...profile,
+          id: profile.id,
+          total_score: profile.total_score || 0, // Ensure we show 0 for null scores
           display_name: profile.display_name || `Anonymous Player #${profile.id.slice(0, 4)}`
         }));
 
         setLeaderboard(formattedLeaderboard);
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
+        setLeaderboard([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
@@ -68,6 +76,8 @@ export const Leaderboard = () => {
             <div key={i} className="h-12 bg-slate-100 rounded"></div>
           ))}
         </div>
+      ) : leaderboard.length === 0 ? (
+        <div className="text-slate-600 text-center py-4">No players found</div>
       ) : (
         <div className="space-y-3">
           {leaderboard.map((entry, index) => (
