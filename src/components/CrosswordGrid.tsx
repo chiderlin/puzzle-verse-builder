@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 
 interface CrosswordCell {
@@ -34,7 +33,17 @@ export const CrosswordGrid = ({
         ...prev,
         [`${row}-${col}`]: upperValue
       }));
-      onCellChange(row, col, upperValue);
+      
+      if (value === "") {
+        const updatedCell = {
+          ...grid[row][col],
+          isRevealed: false,
+          isPartialHint: false
+        };
+        onCellChange(row, col, updatedCell.letter);
+      } else {
+        onCellChange(row, col, upperValue);
+      }
       
       if (value) {
         const nextInput = gridRef.current?.querySelector(
@@ -65,14 +74,24 @@ export const CrosswordGrid = ({
           ...prev,
           [`${row}-${col}`]: ""
         }));
-        onCellChange(row, col, "");
+        const updatedCell = {
+          ...grid[row][col],
+          isRevealed: false,
+          isPartialHint: false
+        };
+        onCellChange(row, col, updatedCell.letter);
         break;
       case "Delete":
         setUserInputs(prev => ({
           ...prev,
           [`${row}-${col}`]: ""
         }));
-        onCellChange(row, col, "");
+        const deletedCell = {
+          ...grid[row][col],
+          isRevealed: false,
+          isPartialHint: false
+        };
+        onCellChange(row, col, deletedCell.letter);
         break;
       case "ArrowLeft":
         e.preventDefault();
