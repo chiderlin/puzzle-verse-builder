@@ -5,6 +5,7 @@ import { AuthForm } from "@/components/AuthForm";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SaveIcon } from "lucide-react";
 
 const defaultPuzzle = {
   grid: [
@@ -61,6 +62,7 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [puzzle, setPuzzle] = useState(defaultPuzzle);
   const { toast } = useToast();
@@ -76,9 +78,91 @@ const Index = () => {
     )
   );
 
-  const [activeClue, setActiveClue] = useState<{ direction: "across" | "down"; number: number } | null>(
-    null
-  );
+  const loadSavedProgress = async () => {
+    try {
+      const { data: progress, error } = await supabase
+        .from('puzzle_progress')
+        .select('grid_state')
+        .order('last_updated', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        if (error.code !== 'PGRST116') { // No rows returned
+          throw error;
+        }
+        return;
+      }
+
+      if (progress?.grid_state) {
+        setGrid(progress.grid_state);
+        toast({
+          title: "Progress Loaded",
+          description: "Your previous game progress has been restored.",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading progress:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load saved progress",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const saveProgress = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Error",
+        description: "Please sign in to save your progress",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data: existingProgress } = await supabase
+        .from('puzzle_progress')
+        .select('id')
+        .limit(1)
+        .single();
+
+      if (existingProgress) {
+        // Update existing progress
+        await supabase
+          .from('puzzle_progress')
+          .update({
+            grid_state: grid,
+            last_updated: new Date().toISOString(),
+          })
+          .eq('id', existingProgress.id);
+      } else {
+        // Insert new progress
+        await supabase
+          .from('puzzle_progress')
+          .insert({
+            grid_state: grid,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+          });
+      }
+
+      toast({
+        title: "Progress Saved",
+        description: "Your game progress has been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const generateNewPuzzle = async () => {
     try {
@@ -272,27 +356,6 @@ const Index = () => {
     });
   };
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      generateNewPuzzle();
-    }
-  }, [isAuthenticated]);
-
   const handleAuth = async (email: string, password: string) => {
     try {
       const { error } = authMode === "login"
@@ -336,6 +399,31 @@ const Index = () => {
   const handleClueClick = (direction: "across" | "down", number: number) => {
     setActiveClue({ direction, number });
   };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadSavedProgress().then(() => {
+        if (!grid.length) {
+          generateNewPuzzle();
+        }
+      });
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -388,6 +476,14 @@ const Index = () => {
               ) : (
                 "Generate New Puzzle"
               )}
+            </Button>
+            <Button
+              onClick={saveProgress}
+              disabled={isSaving}
+              className="flex items-center gap-2"
+            >
+              <SaveIcon className="h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Progress"}
             </Button>
           </div>
         </div>
