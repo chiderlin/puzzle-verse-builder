@@ -92,7 +92,8 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
       }
 
       if (progress?.grid_state) {
-        const loadedGrid = progress.grid_state as GridCell[][];
+        // Cast the grid_state to unknown first, then to GridCell[][]
+        const loadedGrid = progress.grid_state as unknown as GridCell[][];
         if (Array.isArray(loadedGrid) && loadedGrid.length > 0) {
           // Ensure each cell has userCurrentValue, even if it's empty
           const processedGrid = loadedGrid.map(row =>

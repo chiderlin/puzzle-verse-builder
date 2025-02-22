@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -21,7 +22,7 @@ const Index = () => {
     saveProgress,
     generateNewPuzzle,
   } = usePuzzleState(isAuthenticated);
-  
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
@@ -47,8 +48,8 @@ const Index = () => {
   };
 
   const handleRevealAnswer = () => {
-    const newGrid = grid.map((row, rowIndex) =>
-      row.map((cell, colIndex) => ({
+    const newGrid = grid.map(row =>
+      row.map(cell => ({
         ...cell,
         isRevealed: cell.letter !== ""
       }))
@@ -57,6 +58,20 @@ const Index = () => {
     toast({
       title: "Answers Revealed",
       description: "All puzzle answers have been revealed.",
+    });
+  };
+
+  const handleHideAnswer = () => {
+    const newGrid = grid.map(row =>
+      row.map(cell => ({
+        ...cell,
+        isRevealed: false
+      }))
+    );
+    setGrid(newGrid);
+    toast({
+      title: "Answers Hidden",
+      description: "Continue solving the puzzle!",
     });
   };
 
@@ -127,6 +142,7 @@ const Index = () => {
           onGenerateNew={generateNewPuzzle}
           onSaveProgress={saveProgress}
           onRevealAnswer={handleRevealAnswer}
+          onHideAnswer={handleHideAnswer}
           isGenerating={isGenerating}
           isSaving={isSaving}
         />

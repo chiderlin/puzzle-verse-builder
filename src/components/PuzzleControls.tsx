@@ -8,6 +8,7 @@ interface PuzzleControlsProps {
   onGenerateNew: () => void;
   onSaveProgress: () => void;
   onRevealAnswer: () => void;
+  onHideAnswer: () => void;
   isGenerating: boolean;
   isSaving: boolean;
 }
@@ -17,6 +18,7 @@ export const PuzzleControls = ({
   onGenerateNew,
   onSaveProgress,
   onRevealAnswer,
+  onHideAnswer,
   isGenerating,
   isSaving
 }: PuzzleControlsProps) => {
@@ -24,7 +26,11 @@ export const PuzzleControls = ({
 
   const handleToggleAnswers = () => {
     setShowingAnswers(!showingAnswers);
-    onRevealAnswer();
+    if (!showingAnswers) {
+      onRevealAnswer();
+    } else {
+      onHideAnswer();
+    }
   };
 
   return (
@@ -80,4 +86,3 @@ export const PuzzleControls = ({
     </div>
   );
 };
-
