@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -179,16 +180,30 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
     try {
       setIsGenerating(true);
 
+      // Get current user
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.id) throw new Error('User not found');
+
+      // Delete all unsubmitted puzzles for the user
+      const { error: deleteError } = await supabase
+        .from('puzzle_progress')
+        .delete()
+        .eq('user_id', user.user.id)
+        .eq('submitted', false);
+
+      if (deleteError) throw deleteError;
+
+      // Also explicitly delete the puzzle with the specific ID if it exists
       if (currentPuzzleId) {
-        const { error: deleteError } = await supabase
+        const { error: specificDeleteError } = await supabase
           .from('puzzle_progress')
           .delete()
           .eq('id', currentPuzzleId);
 
-        if (deleteError) throw deleteError;
-        setCurrentPuzzleId(null);
+        if (specificDeleteError) throw specificDeleteError;
       }
-
+      
+      setCurrentPuzzleId(null);
       setPuzzle({ grid: [], across: [], down: [] });
       setGrid([]);
       
