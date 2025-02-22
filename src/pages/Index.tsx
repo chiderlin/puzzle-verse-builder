@@ -210,7 +210,7 @@ const Index = () => {
             </div>
           </div> : <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-8">
-              <div className="bg-white p-6 shadow-sm rounded-md">
+              <div className="bg-white p-6 shadow-sm rounded">
                 <CrosswordGrid grid={grid} onCellClick={handleCellClick} onCellChange={handleCellChange} onHintRequest={handleHintRequest} />
               </div>
             </div>
