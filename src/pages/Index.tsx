@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -52,7 +51,6 @@ const Index = () => {
       row.map((cell, colIndex) => ({
         ...cell,
         isRevealed: cell.letter !== ""
-        // Note: We no longer modify isPartialHint here
       }))
     );
     setGrid(newGrid);
@@ -90,7 +88,7 @@ const Index = () => {
     const newGrid = [...grid];
     newGrid[row][col] = {
       ...newGrid[row][col],
-      letter: value,
+      userCurrentValue: value,
     };
     setGrid(newGrid);
   };

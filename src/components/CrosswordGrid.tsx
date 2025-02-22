@@ -1,17 +1,9 @@
-import { useRef, useState } from "react";
 
-interface CrosswordCell {
-  letter: string;
-  number?: number;
-  isActive: boolean;
-  isHighlighted: boolean;
-  isRevealed?: boolean;
-  isPartialHint?: boolean;
-  userInput?: string;
-}
+import { useRef } from "react";
+import { GridCell } from "@/types/puzzle";
 
 interface CrosswordGridProps {
-  grid: CrosswordCell[][];
+  grid: GridCell[][];
   onCellClick: (row: number, col: number) => void;
   onCellChange: (row: number, col: number, value: string) => void;
   onHintRequest: (row: number, col: number) => void;
@@ -24,23 +16,19 @@ export const CrosswordGrid = ({
   onHintRequest 
 }: CrosswordGridProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
-  const [userInputs, setUserInputs] = useState<{ [key: string]: string }>({});
 
   const handleCellInput = (row: number, col: number, value: string) => {
     if (value.length <= 1 && /^[A-Za-z]$/.test(value) || value === "") {
       const upperValue = value.toUpperCase();
-      setUserInputs(prev => ({
-        ...prev,
-        [`${row}-${col}`]: upperValue
-      }));
       
       if (value === "") {
         const updatedCell = {
           ...grid[row][col],
           isRevealed: false,
-          isPartialHint: false
+          isPartialHint: false,
+          userCurrentValue: ""
         };
-        onCellChange(row, col, updatedCell.letter);
+        onCellChange(row, col, "");
       } else {
         onCellChange(row, col, upperValue);
       }
@@ -70,28 +58,10 @@ export const CrosswordGrid = ({
             prevInput.focus();
           }
         }
-        setUserInputs(prev => ({
-          ...prev,
-          [`${row}-${col}`]: ""
-        }));
-        const updatedCell = {
-          ...grid[row][col],
-          isRevealed: false,
-          isPartialHint: false
-        };
-        onCellChange(row, col, updatedCell.letter);
+        onCellChange(row, col, "");
         break;
       case "Delete":
-        setUserInputs(prev => ({
-          ...prev,
-          [`${row}-${col}`]: ""
-        }));
-        const deletedCell = {
-          ...grid[row][col],
-          isRevealed: false,
-          isPartialHint: false
-        };
-        onCellChange(row, col, deletedCell.letter);
+        onCellChange(row, col, "");
         break;
       case "ArrowLeft":
         e.preventDefault();
@@ -187,7 +157,7 @@ export const CrosswordGrid = ({
                       ${cell.isHighlighted ? "bg-yellow-50" : ""}
                       ${cell.isPartialHint ? "bg-gray-50" : ""}
                       ${(cell.isRevealed && !cell.isPartialHint) ? "text-green-600" : 
-                        userInputs[`${rowIndex}-${colIndex}`] ? "text-blue-600" : "text-gray-900"
+                        cell.userCurrentValue ? "text-blue-600" : "text-gray-900"
                       }
                       uppercase
                     `}
@@ -195,7 +165,7 @@ export const CrosswordGrid = ({
                       border: 'none',
                       caretColor: 'transparent'
                     }}
-                    value={cell.isRevealed ? cell.letter : (cell.isPartialHint ? cell.letter : userInputs[`${rowIndex}-${colIndex}`] || "")}
+                    value={cell.isRevealed ? cell.letter : (cell.isPartialHint ? cell.letter : cell.userCurrentValue || "")}
                     onChange={(e) => handleCellInput(rowIndex, colIndex, e.target.value)}
                     onClick={() => onCellClick(rowIndex, colIndex)}
                     onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}

@@ -6,6 +6,7 @@ export interface GridCell {
   isHighlighted: boolean;
   isRevealed: boolean;
   isPartialHint?: boolean;
+  userCurrentValue?: string;
 }
 
 export interface Clue {
