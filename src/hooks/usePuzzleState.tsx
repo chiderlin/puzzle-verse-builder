@@ -96,9 +96,6 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
       
       const data = await generateNewCrossword();
       
-      // Log the raw Gemini response
-      console.log('Raw Gemini response for new puzzle:', data);
-      
       const acrossWithLengths = data.across.map((clue: any) => {
         const row = data.grid.findIndex((r: any[]) => 
           r.some((cell: any) => cell.number === clue.number)
@@ -129,13 +126,6 @@ export const usePuzzleState = (isAuthenticated: boolean) => {
           currentRow++;
         }
         return { ...clue, length };
-      });
-
-      // Log the processed puzzle data
-      console.log('Processed puzzle data:', {
-        grid: data.grid,
-        across: acrossWithLengths,
-        down: downWithLengths
       });
 
       setPuzzle({
