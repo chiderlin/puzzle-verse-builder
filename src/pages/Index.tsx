@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CrosswordGrid } from "@/components/CrosswordGrid";
 import { ClueList } from "@/components/ClueList";
@@ -8,15 +9,15 @@ import { usePuzzleState } from "@/hooks/usePuzzleState";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
+
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
   const {
     puzzle,
     grid,
@@ -26,20 +27,26 @@ const Index = () => {
     saveProgress,
     generateNewPuzzle
   } = usePuzzleState(isAuthenticated);
+
   const fetchTotalScore = async (userId: string) => {
     try {
-      const {
-        data: puzzleScores,
-        error: puzzleError
-      } = await supabase.from('puzzle_progress').select('score').eq('user_id', userId).eq('submitted', true);
+      const { data: puzzleScores, error: puzzleError } = await supabase
+        .from('puzzle_progress')
+        .select('score')
+        .eq('user_id', userId)
+        .eq('submitted', true);
+
       if (puzzleError) throw puzzleError;
+
       const calculatedTotal = puzzleScores.reduce((sum, entry) => sum + (entry.score || 0), 0);
-      const {
-        error: updateError
-      } = await supabase.from('profiles').update({
-        total_score: calculatedTotal
-      }).eq('id', userId);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ total_score: calculatedTotal })
+        .eq('id', userId);
+
       if (updateError) throw updateError;
+
       setTotalScore(calculatedTotal);
     } catch (error) {
       console.error('Error fetching total score:', error);
@@ -50,30 +57,26 @@ const Index = () => {
       });
     }
   };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
       setIsLoading(false);
       if (session?.user) {
         fetchTotalScore(session.user.id);
       }
     });
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
       if (session?.user) {
         fetchTotalScore(session.user.id);
       }
     });
+
     return () => subscription.unsubscribe();
   }, []);
+
   const handleHintRequest = (row: number, col: number) => {
     const newGrid = [...grid];
     newGrid[row][col] = {
@@ -82,6 +85,7 @@ const Index = () => {
     };
     setGrid(newGrid);
   };
+
   const handleRevealAnswer = () => {
     const newGrid = grid.map(row => row.map(cell => ({
       ...cell,
@@ -93,6 +97,7 @@ const Index = () => {
       description: "All puzzle answers have been revealed."
     });
   };
+
   const handleHideAnswer = () => {
     const newGrid = grid.map(row => row.map(cell => ({
       ...cell,
@@ -104,6 +109,7 @@ const Index = () => {
       description: "Continue solving the puzzle!"
     });
   };
+
   const handleAuth = async (email: string, password: string) => {
     try {
       const {
@@ -121,6 +127,7 @@ const Index = () => {
       throw error;
     }
   };
+
   const handleCellClick = (row: number, col: number) => {
     const newGrid = grid.map((r, rowIndex) => r.map((cell, colIndex) => ({
       ...cell,
@@ -129,6 +136,7 @@ const Index = () => {
     })));
     setGrid(newGrid);
   };
+
   const handleCellChange = (row: number, col: number, value: string) => {
     const newGrid = [...grid];
     newGrid[row][col] = {
@@ -137,9 +145,11 @@ const Index = () => {
     };
     setGrid(newGrid);
   };
+
   const handleSubmit = async () => {
     let score = 0;
     let totalCells = 0;
+    
     grid.forEach(row => {
       row.forEach(cell => {
         if (cell.letter) {
@@ -150,26 +160,29 @@ const Index = () => {
         }
       });
     });
+
     try {
-      const {
-        data: user
-      } = await supabase.auth.getUser();
+      const { data: user } = await supabase.auth.getUser();
       if (!user.user?.id) throw new Error('User not found');
-      const {
-        error: submitError
-      } = await supabase.from('puzzle_progress').insert({
-        grid_state: grid as unknown as Json,
-        user_id: user.user.id,
-        score: score,
-        submitted: true,
-        completed_at: new Date().toISOString()
-      });
+
+      const { error: submitError } = await supabase
+        .from('puzzle_progress')
+        .insert({
+          grid_state: grid as unknown as Json,
+          user_id: user.user.id,
+          score: score,
+          submitted: true,
+          completed_at: new Date().toISOString()
+        });
+
       if (submitError) throw submitError;
+
       await fetchTotalScore(user.user.id);
+      
       setIsSubmitted(true);
       toast({
         title: "Puzzle Submitted Successfully!",
-        description: `Your score: ${score} points out of ${totalCells * 5} possible points. Total career score: ${totalScore + score} points`
+        description: `Your score: ${score} points out of ${totalCells * 5} possible points. Total career score: ${totalScore + score} points`,
       });
     } catch (error) {
       console.error('Error submitting puzzle:', error);
@@ -180,11 +193,13 @@ const Index = () => {
       });
     }
   };
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-slate-600">Loading...</div>
       </div>;
   }
+
   if (!isAuthenticated) {
     return <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 flex items-center">
         <div className="w-full">
@@ -196,22 +211,42 @@ const Index = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+
+  return (
+    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[90rem] mx-auto">
         <div className="text-center mb-4">
           <p className="font-semibold text-4xl text-lime-600">Total Career Score: {totalScore} points</p>
         </div>
-        <PuzzleControls onSignOut={() => supabase.auth.signOut()} onGenerateNew={generateNewPuzzle} onSaveProgress={saveProgress} onRevealAnswer={handleRevealAnswer} onHideAnswer={handleHideAnswer} onSubmit={handleSubmit} isGenerating={isGenerating} isSaving={isSaving} isSubmitted={isSubmitted} />
+        <PuzzleControls 
+          onSignOut={() => supabase.auth.signOut()} 
+          onGenerateNew={generateNewPuzzle} 
+          onSaveProgress={saveProgress} 
+          onRevealAnswer={handleRevealAnswer} 
+          onHideAnswer={handleHideAnswer} 
+          onSubmit={handleSubmit} 
+          isGenerating={isGenerating} 
+          isSaving={isSaving} 
+          isSubmitted={isSubmitted} 
+        />
 
-        {isGenerating ? <div className="grid place-items-center h-[600px]">
+        {isGenerating ? (
+          <div className="grid place-items-center h-[600px]">
             <div className="text-center space-y-4">
               <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
               <p className="text-slate-600 animate-pulse">Generating new puzzle...</p>
             </div>
-          </div> : <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-8">
-              <div className="bg-white p-6 shadow-sm rounded">
-                <CrosswordGrid grid={grid} onCellClick={handleCellClick} onCellChange={handleCellChange} onHintRequest={handleHintRequest} />
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <CrosswordGrid 
+                  grid={grid} 
+                  onCellClick={handleCellClick} 
+                  onCellChange={handleCellChange} 
+                  onHintRequest={handleHintRequest} 
+                />
               </div>
             </div>
 
@@ -226,8 +261,11 @@ const Index = () => {
                 <ClueList title="Down" clues={puzzle.down} onClueClick={() => {}} />
               </div>
             </div>
-          </div>}
+          </div>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
