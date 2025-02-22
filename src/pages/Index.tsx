@@ -71,7 +71,7 @@ const Index = () => {
         ...cell,
         isActive: false,
         isHighlighted: false,
-        isRevealed: Math.random() < 0.3,
+        isRevealed: false,
       }))
     )
   );
@@ -83,6 +83,9 @@ const Index = () => {
   const generateNewPuzzle = async () => {
     try {
       setIsGenerating(true);
+      setPuzzle({ grid: [], across: [], down: [] });
+      setGrid([]);
+      
       const { data, error } = await supabase.functions.invoke('generate-crossword');
       
       if (error) throw error;
@@ -242,6 +245,15 @@ const Index = () => {
         description: "Failed to generate new puzzle",
         variant: "destructive",
       });
+      setPuzzle(defaultPuzzle);
+      setGrid(defaultPuzzle.grid.map((row) =>
+        row.map((cell) => ({
+          ...cell,
+          isActive: false,
+          isHighlighted: false,
+          isRevealed: false,
+        }))
+      ));
     } finally {
       setIsGenerating(false);
     }
@@ -380,36 +392,45 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <CrosswordGrid
-                grid={grid}
-                onCellClick={handleCellClick}
-                onCellChange={handleCellChange}
-                onHintRequest={handleHintRequest}
-              />
+        {isGenerating ? (
+          <div className="grid place-items-center h-[600px]">
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-slate-600 animate-pulse">Generating new puzzle...</p>
             </div>
           </div>
-
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <ClueList
-                title="Across"
-                clues={puzzle.across}
-                onClueClick={(number) => handleClueClick("across", number)}
-              />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <CrosswordGrid
+                  grid={grid}
+                  onCellClick={handleCellClick}
+                  onCellChange={handleCellChange}
+                  onHintRequest={handleHintRequest}
+                />
+              </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <ClueList
-                title="Down"
-                clues={puzzle.down}
-                onClueClick={(number) => handleClueClick("down", number)}
-              />
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <ClueList
+                  title="Across"
+                  clues={puzzle.across}
+                  onClueClick={(number) => handleClueClick("across", number)}
+                />
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <ClueList
+                  title="Down"
+                  clues={puzzle.down}
+                  onClueClick={(number) => handleClueClick("down", number)}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
