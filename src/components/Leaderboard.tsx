@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 type LeaderboardEntry = {
   id: string;
   total_score: number;
-  email?: string;
   display_name?: string;
 }
 
@@ -18,25 +17,19 @@ export const Leaderboard = () => {
       try {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, total_score, email, display_name')
+          .select('id, total_score, display_name')
           .order('total_score', { ascending: false })
           .limit(10);
 
         if (profilesError) throw profilesError;
 
-        // Format display names from emails if not already set
-        const leaderboardWithDisplayNames = profiles.map((profile) => {
-          if (!profile.display_name && profile.email) {
-            const username = profile.email.split('@')[0]; // Get the part before @
-            return {
-              ...profile,
-              display_name: username
-            };
-          }
-          return profile;
-        });
+        // Format display names, using "Anonymous Player #ID" for null display_names
+        const formattedLeaderboard = profiles.map((profile) => ({
+          ...profile,
+          display_name: profile.display_name || `Anonymous Player #${profile.id.slice(0, 4)}`
+        }));
 
-        setLeaderboard(leaderboardWithDisplayNames);
+        setLeaderboard(formattedLeaderboard);
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
       } finally {
@@ -92,7 +85,7 @@ export const Leaderboard = () => {
                   {index + 1}
                 </span>
                 <span className="font-medium text-slate-900">
-                  {entry.display_name || 'Player ' + (index + 1)}
+                  {entry.display_name}
                 </span>
               </div>
               <span className="font-bold text-lime-600">{entry.total_score} pts</span>
