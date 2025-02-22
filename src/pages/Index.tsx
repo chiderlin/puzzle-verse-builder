@@ -28,7 +28,6 @@ const samplePuzzle = {
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const { toast } = useToast();
   
@@ -45,103 +44,6 @@ const Index = () => {
   const [activeClue, setActiveClue] = useState<{ direction: "across" | "down"; number: number } | null>(
     null
   );
-
-  // Load saved progress
-  useEffect(() => {
-    const loadProgress = async () => {
-      if (!isAuthenticated) return;
-
-      try {
-        const { data: progressData, error } = await supabase
-          .from('puzzle_progress')
-          .select('grid_state')
-          .order('last_updated', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (error) {
-          if (error.code !== 'PGRST116') { // No rows returned
-            console.error('Error loading progress:', error);
-            toast({
-              title: "Error",
-              description: "Failed to load your progress",
-              variant: "destructive",
-            });
-          }
-          return;
-        }
-
-        if (progressData) {
-          setGrid(progressData.grid_state);
-          toast({
-            title: "Progress Loaded",
-            description: "Your previous progress has been restored",
-          });
-        }
-      } catch (error) {
-        console.error('Error loading progress:', error);
-      }
-    };
-
-    loadProgress();
-  }, [isAuthenticated, toast]);
-
-  // Save progress when grid changes
-  useEffect(() => {
-    const saveProgress = async () => {
-      if (!isAuthenticated || isSaving) return;
-
-      setIsSaving(true);
-      try {
-        const { data: existingProgress } = await supabase
-          .from('puzzle_progress')
-          .select('id')
-          .limit(1)
-          .single();
-
-        if (existingProgress) {
-          // Update existing progress
-          const { error } = await supabase
-            .from('puzzle_progress')
-            .update({
-              grid_state: grid,
-              last_updated: new Date().toISOString(),
-            })
-            .eq('id', existingProgress.id);
-
-          if (error) throw error;
-        } else {
-          // Create new progress
-          const { error } = await supabase
-            .from('puzzle_progress')
-            .insert({
-              grid_state: grid,
-              user_id: (await supabase.auth.getUser()).data.user?.id,
-            });
-
-          if (error) throw error;
-        }
-
-        toast({
-          title: "Progress Saved",
-          description: "Your progress has been automatically saved",
-        });
-      } catch (error) {
-        console.error('Error saving progress:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save your progress",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    };
-
-    // Debounce save operation
-    const timeoutId = setTimeout(saveProgress, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [grid, isAuthenticated, isSaving, toast]);
 
   useEffect(() => {
     // Check initial auth state
