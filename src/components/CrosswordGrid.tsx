@@ -144,12 +144,12 @@ export const CrosswordGrid = ({
               key={`${rowIndex}-${colIndex}`} 
               className={`
                 relative aspect-square
-                ${cell.letter !== undefined ? 'bg-white' : 'bg-gray-900'}
+                ${cell.letter === "" ? 'bg-gray-900' : 'bg-white'}
                 ${cell.isActive ? 'ring-2 ring-blue-500' : ''}
                 ${cell.isHighlighted ? 'bg-yellow-50' : ''}
               `}
             >
-              {cell.letter !== undefined && (
+              {cell.letter !== "" && (
                 <>
                   {cell.number && (
                     <span 
