@@ -15,27 +15,38 @@ export const Leaderboard = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
+        console.log("Fetching leaderboard data...");
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, total_score, display_name')
-          .order('total_score', { ascending: false })
-          .limit(10);
+          .order('total_score', { ascending: false });
 
-        if (profilesError) throw profilesError;
+        if (profilesError) {
+          console.error('Profiles error:', profilesError);
+          throw profilesError;
+        }
+
+        console.log("Raw profiles data:", profiles);
 
         // Ensure we have data and it's an array
         if (!profiles || !Array.isArray(profiles)) {
+          console.log("No profiles data or invalid format");
           setLeaderboard([]);
           return;
         }
 
         // Format display names, using "Anonymous Player #ID" for null display_names
-        const formattedLeaderboard = profiles.map((profile) => ({
-          id: profile.id,
-          total_score: profile.total_score || 0, // Ensure we show 0 for null scores
-          display_name: profile.display_name || `Anonymous Player #${profile.id.slice(0, 4)}`
-        }));
+        const formattedLeaderboard = profiles.map((profile) => {
+          const entry = {
+            id: profile.id,
+            total_score: profile.total_score || 0, // Ensure we show 0 for null scores
+            display_name: profile.display_name || `Anonymous Player #${profile.id.slice(0, 4)}`
+          };
+          console.log("Formatted entry:", entry);
+          return entry;
+        });
 
+        console.log("Final leaderboard data:", formattedLeaderboard);
         setLeaderboard(formattedLeaderboard);
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
@@ -56,7 +67,8 @@ export const Leaderboard = () => {
           schema: 'public', 
           table: 'profiles' 
         }, 
-        () => {
+        (payload) => {
+          console.log("Realtime update received:", payload);
           fetchLeaderboard();
         }
       )
