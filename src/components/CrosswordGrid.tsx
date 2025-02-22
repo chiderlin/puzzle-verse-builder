@@ -103,26 +103,26 @@ export const CrosswordGrid = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <div className="flex justify-center gap-8 items-center">
+    <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="text-center mb-6">
+        <div className="flex justify-center gap-6 items-center">
           <img 
             src="/lovable-uploads/c6fa1836-b744-4791-a522-0d9aff5c5f6b.png" 
             alt="Crown" 
-            className="w-16 h-16"
+            className="w-12 h-12"
           />
-          <h1 className="text-4xl font-black tracking-tight">CROSSWORD PUZZLE</h1>
+          <h1 className="text-3xl font-black tracking-tight">CROSSWORD PUZZLE</h1>
           <img 
             src="/lovable-uploads/c6fa1836-b744-4791-a522-0d9aff5c5f6b.png" 
             alt="Castle" 
-            className="w-16 h-16"
+            className="w-12 h-12"
           />
         </div>
       </div>
 
       <div 
         ref={gridRef} 
-        className="grid gap-px bg-gray-900 p-0.5 rounded-lg shadow-xl max-w-4xl mx-auto"
+        className="grid gap-px bg-gray-900 p-0.5 rounded-lg shadow-xl max-w-2xl mx-auto"
         style={{
           gridTemplateColumns: `repeat(${grid[0]?.length || 0}, minmax(0, 1fr))`
         }}
@@ -142,7 +142,7 @@ export const CrosswordGrid = ({
                 <>
                   {cell.number && (
                     <span 
-                      className="absolute top-0.5 left-1 text-xs font-bold text-gray-900"
+                      className="absolute top-0.5 left-1 text-[10px] font-bold text-gray-900"
                     >
                       {cell.number}
                     </span>
@@ -151,7 +151,7 @@ export const CrosswordGrid = ({
                     type="text"
                     maxLength={1}
                     className={`
-                      w-full h-full text-center text-lg font-bold
+                      w-full h-full text-center text-base font-bold
                       focus:outline-none focus:bg-blue-50
                       ${cell.isActive ? "bg-blue-50" : "bg-white"}
                       ${cell.isHighlighted ? "bg-yellow-50" : ""}
