@@ -51,7 +51,43 @@ const Index = () => {
       
       if (error) throw error;
 
-      setPuzzle(data);
+      const acrossWithLengths = data.across.map((clue: any) => {
+        const row = data.grid.findIndex((r: any[]) => 
+          r.some((cell: any) => cell.number === clue.number)
+        );
+        const col = data.grid[row].findIndex((cell: any) => 
+          cell.number === clue.number
+        );
+        let length = 0;
+        let currentCol = col;
+        while (currentCol < data.grid[row].length && data.grid[row][currentCol].letter) {
+          length++;
+          currentCol++;
+        }
+        return { ...clue, length };
+      });
+
+      const downWithLengths = data.down.map((clue: any) => {
+        const row = data.grid.findIndex((r: any[]) => 
+          r.some((cell: any) => cell.number === clue.number)
+        );
+        const col = data.grid[row].findIndex((cell: any) => 
+          cell.number === clue.number
+        );
+        let length = 0;
+        let currentRow = row;
+        while (currentRow < data.grid.length && data.grid[currentRow][col].letter) {
+          length++;
+          currentRow++;
+        }
+        return { ...clue, length };
+      });
+
+      setPuzzle({
+        ...data,
+        across: acrossWithLengths,
+        down: downWithLengths
+      });
 
       const getWordAt = (startRow: number, startCol: number, direction: "across" | "down"): string => {
         let word = "";
